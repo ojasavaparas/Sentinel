@@ -67,11 +67,23 @@ class AnthropicClient:
         tools: list[dict[str, Any]] | None = None,
     ) -> Response:
         """Send messages to the Claude API and return a parsed response."""
+        # Extract system messages — the Anthropic API requires them as a
+        # top-level `system` parameter, not as {"role": "system"} messages.
+        system_parts: list[str] = []
+        non_system: list[dict[str, Any]] = []
+        for msg in messages:
+            if msg.get("role") == "system":
+                system_parts.append(msg["content"])
+            else:
+                non_system.append(msg)
+
         kwargs: dict[str, Any] = {
             "model": self._model,
             "max_tokens": 4096,
-            "messages": messages,
+            "messages": non_system,
         }
+        if system_parts:
+            kwargs["system"] = "\n\n".join(system_parts)
         if tools:
             kwargs["tools"] = tools
 
