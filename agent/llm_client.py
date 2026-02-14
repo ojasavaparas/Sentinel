@@ -21,6 +21,7 @@ class TokenUsage:
 
     @property
     def total_tokens(self) -> int:
+        """Return the sum of input and output tokens."""
         return self.input_tokens + self.output_tokens
 
 
@@ -43,7 +44,9 @@ class LLMClient(Protocol):
         self,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
-    ) -> Response: ...
+    ) -> Response:
+        """Send messages to the LLM and return a standardized response."""
+        ...
 
 
 class AnthropicClient:
@@ -63,6 +66,7 @@ class AnthropicClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
     ) -> Response:
+        """Send messages to the Claude API and return a parsed response."""
         kwargs: dict[str, Any] = {
             "model": self._model,
             "max_tokens": 4096,
@@ -117,6 +121,7 @@ class MockClient:
         self.call_history: list[dict[str, Any]] = []
 
     def add_response(self, response: Response) -> None:
+        """Queue a scripted response to be returned by the next chat call."""
         self._responses.append(response)
 
     async def chat(
@@ -124,6 +129,7 @@ class MockClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
     ) -> Response:
+        """Return the next scripted response or a default mock response."""
         self.call_history.append({"messages": messages, "tools": tools})
 
         if self._call_index < len(self._responses):
