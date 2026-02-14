@@ -1,4 +1,4 @@
-.PHONY: setup run test lint typecheck ingest docker-up docker-down demo
+.PHONY: setup run api mcp test lint typecheck ingest docker-up docker-down demo
 
 setup:
 	python -m venv .venv
@@ -6,6 +6,12 @@ setup:
 
 run:
 	.venv/bin/uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+api:
+	.venv/bin/uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+mcp:
+	.venv/bin/python -m protocols.mcp_server
 
 test:
 	.venv/bin/pytest -v

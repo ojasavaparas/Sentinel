@@ -37,6 +37,69 @@ make run
 make demo
 ```
 
+## API Server
+
+```bash
+make api   # Start FastAPI server on port 8000
+```
+
+Endpoints:
+- `POST /api/v1/analyze` — Run full incident analysis pipeline
+- `GET /api/v1/incidents` — List recent incidents
+- `GET /api/v1/incidents/{id}` — Get full incident report
+- `GET /api/v1/incidents/{id}/trace` — Get agent decision trace
+- `POST /api/v1/runbooks/search` — Search runbooks via RAG
+- `GET /api/v1/health` — Health check
+- `GET /metrics` — Prometheus metrics
+
+## MCP Server
+
+Sentinel exposes its capabilities via the [Model Context Protocol](https://modelcontextprotocol.io/) so any MCP-compatible AI client can use it as a tool provider.
+
+```bash
+make mcp   # Start the MCP server
+```
+
+### Claude Desktop Configuration
+
+Add this to your Claude Desktop config file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "sentinel": {
+      "command": "/path/to/Sentinel/.venv/bin/python",
+      "args": ["-m", "protocols.mcp_server"],
+      "cwd": "/path/to/Sentinel",
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key",
+        "LLM_PROVIDER": "anthropic"
+      }
+    }
+  }
+}
+```
+
+Replace `/path/to/Sentinel` with the actual path to your project directory.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `analyze_incident` | Run the full Triage → Research → Remediation pipeline on an incident |
+| `search_runbooks` | Search operational runbooks via vector similarity |
+| `get_service_health` | Get current health metrics for a service |
+
+### Available MCP Resources
+
+| Resource | Description |
+|----------|-------------|
+| `runbook://{filename}` | Read a specific runbook by filename |
+| `runbook://index` | List all available runbooks |
+
 ## Development
 
 ```bash

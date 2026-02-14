@@ -1,8 +1,111 @@
 """FastAPI application — main entrypoint for the Sentinel API."""
 
-# TODO: Implement FastAPI app
-# - Create FastAPI instance with title="Sentinel" and description
-# - Include routes from api.routes
-# - Add CORS middleware
-# - Add startup event to initialize LLM client and RAG engine
-# - Health check endpoint at /health
+from __future__ import annotations
+
+import time
+from contextlib import asynccontextmanager
+
+import structlog
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from agent.core import IncidentAnalyzer
+from agent.llm_client import create_client
+from api.deps import init_analyzer, init_rag_engine
+from api.routes import metrics_router, router
+from rag.engine import RAGEngine
+from rag.ingest import COLLECTION_NAME, ingest_runbooks
+
+logger = structlog.get_logger()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # noqa: ANN001, ARG001
+    """Startup and shutdown events."""
+    logger.info("sentinel_starting")
+
+    # Initialize RAG engine — ingest runbooks if collection is empty
+    try:
+        import chromadb
+        import os
+
+        persist_dir = os.environ.get("CHROMA_PERSIST_DIR", "./chroma_data")
+        client = chromadb.PersistentClient(path=persist_dir)
+        try:
+            collection = client.get_collection(COLLECTION_NAME)
+            if collection.count() == 0:
+                raise ValueError("empty")
+        except Exception:
+            logger.info("ingesting_runbooks")
+            ingest_runbooks()
+
+        rag_engine = RAGEngine()
+        init_rag_engine(rag_engine)
+        logger.info("rag_engine_initialized")
+    except Exception as e:
+        logger.error("rag_init_failed", error=str(e))
+        rag_engine = None
+
+    # Initialize the incident analyzer
+    llm_client = create_client()
+    analyzer = IncidentAnalyzer(llm_client=llm_client, rag_engine=rag_engine)
+    init_analyzer(analyzer)
+    logger.info("analyzer_initialized")
+
+    yield
+
+    logger.info("sentinel_shutdown")
+
+
+app = FastAPI(
+    title="Sentinel",
+    description="Multi-agent AI system for automated production incident analysis",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):  # noqa: ANN001
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+
+    logger.info(
+        "http_request",
+        method=request.method,
+        path=request.url.path,
+        status=response.status_code,
+        duration_ms=round(duration_ms, 2),
+    )
+    return response
+
+
+# Error handling
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error("unhandled_exception", path=request.url.path, error=str(exc))
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc),
+            "path": request.url.path,
+        },
+    )
+
+
+# Include routers
+app.include_router(router)
+app.include_router(metrics_router)
