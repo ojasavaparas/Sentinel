@@ -7,6 +7,7 @@ from typing import Any
 
 import structlog
 
+from agent.agents import extract_json
 from agent.llm_client import LLMClient, TokenUsage
 from agent.models import ToolCall
 from agent.prompts import REMEDIATION_SYSTEM_PROMPT
@@ -105,6 +106,21 @@ class RemediationAgent:
             messages.append({"role": "assistant", "content": assistant_blocks})
             messages.append({"role": "user", "content": tool_results_content})
 
+        # If the loop ended without a final text response, force one
+        if not response.content:
+            messages.append({
+                "role": "user",
+                "content": (
+                    "Based on all the runbook information gathered, "
+                    "provide your final remediation proposal as JSON now."
+                ),
+            })
+            response = await self._llm.chat(
+                messages=[{"role": "system", "content": REMEDIATION_SYSTEM_PROMPT}] + messages,
+            )
+            total_usage.input_tokens += response.usage.input_tokens
+            total_usage.output_tokens += response.usage.output_tokens
+
         # Calculate cost
         cost = (total_usage.input_tokens * 3.0 + total_usage.output_tokens * 15.0) / 1_000_000
 
@@ -125,29 +141,21 @@ class RemediationAgent:
         )
 
         # Parse the JSON response
-        result: dict[str, Any]
-        try:
-            result = json.loads(response.content)
-        except json.JSONDecodeError:
-            content = response.content
-            start = content.find("{")
-            end = content.rfind("}") + 1
-            if start >= 0 and end > start:
-                result = json.loads(content[start:end])
-            else:
-                result = {
-                    "remediation_steps": [
-                        {
-                            "step": 1,
-                            "action": "Manual investigation required",
-                            "risk": "medium",
-                            "requires_approval": True,
-                            "rationale": response.content,
-                        }
-                    ],
-                    "requires_human_approval": True,
-                    "summary": response.content,
-                }
+        result = extract_json(response.content)
+        if result is None:
+            result = {
+                "remediation_steps": [
+                    {
+                        "step": 1,
+                        "action": "Manual investigation required",
+                        "risk": "medium",
+                        "requires_approval": True,
+                        "rationale": response.content,
+                    }
+                ],
+                "requires_human_approval": True,
+                "summary": response.content,
+            }
 
         # Ensure human approval flag is set
         if "requires_human_approval" not in result:

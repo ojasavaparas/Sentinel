@@ -7,6 +7,7 @@ from typing import Any
 
 import structlog
 
+from agent.agents import extract_json
 from agent.llm_client import LLMClient, TokenUsage
 from agent.models import ToolCall
 from agent.prompts import RESEARCH_SYSTEM_PROMPT
@@ -148,24 +149,16 @@ class ResearchAgent:
         )
 
         # Parse the JSON response
-        result: dict[str, Any]
-        try:
-            result = json.loads(response.content)
-        except json.JSONDecodeError:
-            content = response.content
-            start = content.find("{")
-            end = content.rfind("}") + 1
-            if start >= 0 and end > start:
-                result = json.loads(content[start:end])
-            else:
-                result = {
-                    "timeline": [],
-                    "root_cause": response.content,
-                    "confidence": 0.5,
-                    "evidence": [],
-                    "relevant_runbooks": [],
-                    "affected_services": triage_result.get("affected_services", []),
-                }
+        result = extract_json(response.content)
+        if result is None:
+            result = {
+                "timeline": [],
+                "root_cause": response.content,
+                "confidence": 0.5,
+                "evidence": [],
+                "relevant_runbooks": [],
+                "affected_services": triage_result.get("affected_services", []),
+            }
 
         logger.info(
             "research_complete",

@@ -7,6 +7,7 @@ from typing import Any
 
 import structlog
 
+from agent.agents import extract_json
 from agent.llm_client import LLMClient, TokenUsage
 from agent.models import Alert, ToolCall
 from agent.prompts import TRIAGE_SYSTEM_PROMPT
@@ -122,26 +123,17 @@ class TriageAgent:
         )
 
         # Parse the JSON response
-        result: dict[str, Any]
-        try:
-            result = json.loads(response.content)
-        except json.JSONDecodeError:
-            # Try to extract JSON from the response
-            content = response.content
-            start = content.find("{")
-            end = content.rfind("}") + 1
-            if start >= 0 and end > start:
-                result = json.loads(content[start:end])
-            else:
-                result = {
-                    "classification": "unknown",
-                    "affected_services": [alert.service],
-                    "priority": "P1",
-                    "summary": response.content,
-                    "delegation_instructions": (
-                        f"Investigate {alert.service} for {alert.description}"
-                    ),
-                }
+        result = extract_json(response.content)
+        if result is None:
+            result = {
+                "classification": "unknown",
+                "affected_services": [alert.service],
+                "priority": "P1",
+                "summary": response.content,
+                "delegation_instructions": (
+                    f"Investigate {alert.service} for {alert.description}"
+                ),
+            }
 
         logger.info(
             "triage_complete",
