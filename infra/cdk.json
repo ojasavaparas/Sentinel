@@ -1,0 +1,7 @@
+{
+  "app": "python3 app.py",
+  "context": {
+    "domain_name": "agent.ojasavaparas.com",
+    "hosted_zone_name": "ojasavaparas.com"
+  }
+}
