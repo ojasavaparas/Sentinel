@@ -1,0 +1,65 @@
+[
+  {
+    "timestamp": "2024-01-15T14:00:00Z",
+    "service": "payment-api",
+    "deployer": "sarah.chen",
+    "commit_hash": "a1bf3d2",
+    "commit_message": "Update DB connection pool settings and timeout configs",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-14T09:30:00Z",
+    "service": "payment-api",
+    "deployer": "james.rodriguez",
+    "commit_hash": "e4c8a19",
+    "commit_message": "Add retry logic for Stripe webhook processing",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-13T16:00:00Z",
+    "service": "user-service",
+    "deployer": "alex.kim",
+    "commit_hash": "b7d2f15",
+    "commit_message": "Update user profile validation rules and add email verification",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-12T11:00:00Z",
+    "service": "user-service",
+    "deployer": "alex.kim",
+    "commit_hash": "f3a1c88",
+    "commit_message": "Bump dependencies and fix security advisory CVE-2024-0012",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-08T14:30:00Z",
+    "service": "order-service",
+    "deployer": "maria.santos",
+    "commit_hash": "c9e4d71",
+    "commit_message": "Add order status webhook notifications and improve error handling",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-10T10:15:00Z",
+    "service": "notification-service",
+    "deployer": "david.park",
+    "commit_hash": "d2f7b93",
+    "commit_message": "Add SMS notification channel via Twilio integration",
+    "status": "completed",
+    "rollback_available": true
+  },
+  {
+    "timestamp": "2024-01-05T09:00:00Z",
+    "service": "payment-api",
+    "deployer": "sarah.chen",
+    "commit_hash": "a8b3e44",
+    "commit_message": "Migrate to new Stripe API v2024-01 and update webhook handlers",
+    "status": "completed",
+    "rollback_available": false
+  }
+]

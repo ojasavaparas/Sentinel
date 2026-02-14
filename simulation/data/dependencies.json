@@ -1,0 +1,32 @@
+[
+  {
+    "service": "payment-api",
+    "dependencies": [
+      {"name": "postgres-primary", "type": "database", "health_status": "degraded"},
+      {"name": "redis-cache", "type": "cache", "health_status": "healthy"},
+      {"name": "stripe-api", "type": "external-api", "health_status": "healthy"}
+    ]
+  },
+  {
+    "service": "order-service",
+    "dependencies": [
+      {"name": "payment-api", "type": "internal-service", "health_status": "degraded"},
+      {"name": "inventory-service", "type": "internal-service", "health_status": "healthy"},
+      {"name": "postgres-primary", "type": "database", "health_status": "degraded"}
+    ]
+  },
+  {
+    "service": "user-service",
+    "dependencies": [
+      {"name": "postgres-primary", "type": "database", "health_status": "degraded"},
+      {"name": "redis-cache", "type": "cache", "health_status": "healthy"}
+    ]
+  },
+  {
+    "service": "notification-service",
+    "dependencies": [
+      {"name": "user-service", "type": "internal-service", "health_status": "healthy"},
+      {"name": "sendgrid-api", "type": "external-api", "health_status": "healthy"}
+    ]
+  }
+]
