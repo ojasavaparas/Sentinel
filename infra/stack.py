@@ -77,14 +77,10 @@ class SentinelStack(Stack):
         )
 
         # ----------------------------------------------------------------------
-        # ECR Repository
+        # ECR Repository (import existing — created outside CDK)
         # ----------------------------------------------------------------------
-        repository = ecr.Repository(
-            self,
-            "SentinelRepo",
-            repository_name="sentinel",
-            removal_policy=RemovalPolicy.DESTROY,
-            empty_on_delete=True,
+        repository = ecr.Repository.from_repository_name(
+            self, "SentinelRepo", "sentinel"
         )
 
         # ----------------------------------------------------------------------
@@ -133,10 +129,15 @@ class SentinelStack(Stack):
             ),
             environment={
                 "LLM_PROVIDER": "anthropic",
+                "LLM_MODEL": "claude-sonnet-4-20250514",
+                "ANTHROPIC_API_KEY": self.node.try_get_context("anthropic_api_key") or "",
                 "LOG_FORMAT": "json",
             },
             health_check=ecs.HealthCheck(
-                command=["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"],
+                command=[
+                    "CMD-SHELL",
+                    "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')\"",
+                ],
                 interval=Duration.seconds(30),
                 timeout=Duration.seconds(5),
                 retries=3,
@@ -155,7 +156,7 @@ class SentinelStack(Stack):
             self,
             "AlbSg",
             vpc=vpc,
-            description="ALB security group — allow HTTP/HTTPS from anywhere",
+            description="ALB security group - allow HTTP/HTTPS from anywhere",
             allow_all_outbound=True,
         )
         alb_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "HTTP")
@@ -165,7 +166,7 @@ class SentinelStack(Stack):
             self,
             "FargateSg",
             vpc=vpc,
-            description="Fargate security group — allow traffic only from ALB",
+            description="Fargate security group - allow traffic only from ALB",
             allow_all_outbound=True,
         )
         fargate_sg.add_ingress_rule(alb_sg, ec2.Port.tcp(8000), "From ALB")
@@ -179,6 +180,7 @@ class SentinelStack(Stack):
             vpc=vpc,
             internet_facing=True,
             security_group=alb_sg,
+            idle_timeout=Duration.seconds(120),
         )
 
         # HTTPS listener

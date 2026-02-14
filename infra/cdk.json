@@ -1,5 +1,5 @@
 {
-  "app": "python3 app.py",
+  "app": "../.venv/bin/python app.py",
   "context": {
     "domain_name": "agent.ojasavaparas.com",
     "hosted_zone_name": "ojasavaparas.com"

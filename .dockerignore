@@ -1,0 +1,11 @@
+.venv/
+.git/
+.github/
+chroma_data/
+__pycache__/
+*.pyc
+.env
+.coverage
+.mypy_cache/
+.ruff_cache/
+infra/cdk.out/

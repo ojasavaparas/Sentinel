@@ -10,8 +10,8 @@ SentinelStack(
     app,
     "SentinelStack",
     env=cdk.Environment(
-        account=app.node.try_get_context("account") or None,
-        region=app.node.try_get_context("region") or "us-east-1",
+        account="392746353271",
+        region="us-east-1",
     ),
 )
 
