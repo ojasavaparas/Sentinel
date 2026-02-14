@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import AsyncIterator
 from typing import Any
 
 import structlog
@@ -13,7 +14,7 @@ from agent.agents.remediation import RemediationAgent
 from agent.agents.research import ResearchAgent
 from agent.agents.triage import TriageAgent
 from agent.llm_client import LLMClient
-from agent.models import Alert, IncidentReport
+from agent.models import Alert, IncidentReport, StreamEvent
 from monitoring.finops import CostTracker
 from monitoring.metrics import record_analysis_complete
 from monitoring.tracer import DecisionTracer
@@ -95,14 +96,38 @@ class IncidentAnalyzer:
             )
 
         duration = time.perf_counter() - start_time
+        report = self._build_report(
+            incident_id, alert, trace_id, duration,
+            triage_result, research_result, remediation_result,
+        )
 
-        # Extract remediation steps as plain strings
+        logger.info(
+            "analysis_complete",
+            incident_id=incident_id,
+            duration_seconds=report.duration_seconds,
+            total_tokens=report.total_tokens,
+            total_cost_usd=round(report.total_cost_usd, 4),
+            requires_approval=report.requires_human_approval,
+        )
+
+        return report
+
+    def _build_report(
+        self,
+        incident_id: str,
+        alert: Alert,
+        trace_id: str,
+        duration: float,
+        triage_result: dict[str, Any],
+        research_result: dict[str, Any],
+        remediation_result: dict[str, Any],
+    ) -> IncidentReport:
+        """Build an IncidentReport from pipeline results."""
         remediation_steps = [
             step.get("action", str(step))
             for step in remediation_result.get("remediation_steps", [])
         ]
 
-        # Build the report
         report = IncidentReport(
             incident_id=incident_id,
             alert=alert,
@@ -132,16 +157,133 @@ class IncidentAnalyzer:
             if step.tool_calls:
                 _cost_tracker.record_tool_calls(incident_id, len(step.tool_calls))
 
+        return report
+
+    async def analyze_stream(self, alert: Alert) -> AsyncIterator[StreamEvent]:
+        """Run the analysis pipeline, yielding SSE events as agents progress."""
+        incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
+        trace_id = new_trace_id()
+        start_time = time.perf_counter()
+
+        event_queue: asyncio.Queue[StreamEvent] = asyncio.Queue()
+
+        # Create a separate tracer with the event queue for streaming
+        stream_tracer = DecisionTracer(event_queue=event_queue)
+        stream_tracer.start_trace(trace_id)
+
+        # Build streaming-aware agents sharing the same LLM and tools
+        triage = TriageAgent(self._llm, self._tool_registry, stream_tracer)
+        research = ResearchAgent(self._llm, self._tool_registry, stream_tracer)
+        remediation = RemediationAgent(self._llm, self._tool_registry, stream_tracer)
+
         logger.info(
-            "analysis_complete",
+            "stream_analysis_started",
             incident_id=incident_id,
-            duration_seconds=report.duration_seconds,
-            total_tokens=report.total_tokens,
-            total_cost_usd=round(report.total_cost_usd, 4),
-            requires_approval=report.requires_human_approval,
+            trace_id=trace_id,
+            service=alert.service,
         )
 
-        return report
+        triage_result: dict[str, Any] = {}
+        research_result: dict[str, Any] = {}
+        remediation_result: dict[str, Any] = {}
+        pipeline_error: Exception | None = None
+
+        async def _streaming_pipeline() -> None:
+            nonlocal triage_result, research_result, remediation_result, pipeline_error
+            try:
+                # Triage
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_start", agent_name="triage",
+                ))
+                triage_result = await triage.run(alert, trace_id)
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_complete", agent_name="triage",
+                    data={"tokens_used": stream_tracer.get_total_tokens(trace_id)},
+                ))
+
+                self._message_bus.send(
+                    from_agent="triage", to_agent="research",
+                    message_type="delegate", content=triage_result, trace_id=trace_id,
+                )
+
+                # Research
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_start", agent_name="research",
+                ))
+                research_result = await research.run(triage_result, trace_id)
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_complete", agent_name="research",
+                    data={"tokens_used": stream_tracer.get_total_tokens(trace_id)},
+                ))
+
+                self._message_bus.send(
+                    from_agent="research", to_agent="remediation",
+                    message_type="delegate", content=research_result, trace_id=trace_id,
+                )
+
+                # Remediation
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_start", agent_name="remediation",
+                ))
+                remediation_result = await remediation.run(research_result, trace_id)
+                event_queue.put_nowait(StreamEvent(
+                    event_type="agent_complete", agent_name="remediation",
+                    data={"tokens_used": stream_tracer.get_total_tokens(trace_id)},
+                ))
+
+                self._message_bus.send(
+                    from_agent="remediation", to_agent="orchestrator",
+                    message_type=(
+                        "respond"
+                        if not remediation_result.get("requires_human_approval")
+                        else "escalate"
+                    ),
+                    content=remediation_result, trace_id=trace_id,
+                )
+            except Exception as e:
+                pipeline_error = e
+                event_queue.put_nowait(StreamEvent(
+                    event_type="error", data={"message": str(e)},
+                ))
+            finally:
+                # Sentinel value to signal completion
+                event_queue.put_nowait(StreamEvent(event_type="error", data={"_done": True}))
+
+        task = asyncio.create_task(_streaming_pipeline())
+
+        # Yield events as they arrive from the queue
+        while True:
+            event = await event_queue.get()
+            if event.data.get("_done"):
+                break
+            yield event
+
+        await task  # ensure task is fully done
+
+        duration = time.perf_counter() - start_time
+
+        if pipeline_error is not None:
+            stream_tracer.log_step(
+                trace_id=trace_id, agent_name="orchestrator",
+                action="error", reasoning=f"Analysis failed: {pipeline_error}",
+            )
+
+        # Use the stream_tracer to build the report (it has all the steps)
+        # Temporarily swap tracers to build report
+        original_tracer = self._tracer
+        self._tracer = stream_tracer
+        report = self._build_report(
+            incident_id, alert, trace_id, duration,
+            triage_result, research_result, remediation_result,
+        )
+        self._tracer = original_tracer
+
+        yield StreamEvent(
+            event_type="analysis_complete",
+            data={"report": report.model_dump(mode="json")},
+        )
+        # Stash the report on self so the caller can retrieve it
+        self._last_stream_report = report
 
     async def _run_pipeline(
         self,

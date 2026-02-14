@@ -1,4 +1,4 @@
-.PHONY: setup run api mcp test lint typecheck ingest docker-up docker-down demo dashboard infra-deploy infra-destroy ecr-push deploy
+.PHONY: setup run api mcp test lint typecheck ingest docker-up docker-down demo dashboard infra-deploy infra-destroy ecr-push deploy eval eval-live
 
 setup:
 	python -m venv .venv
@@ -54,3 +54,9 @@ ecr-push:
 
 deploy:
 	./scripts/deploy.sh
+
+eval:
+	.venv/bin/python -m evaluation
+
+eval-live:
+	EVAL_MODE=live .venv/bin/python -m evaluation

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -54,6 +54,21 @@ class IncidentReport(BaseModel):
     total_cost_usd: float
     duration_seconds: float
     requires_human_approval: bool
+
+
+class StreamEvent(BaseModel):
+    """A single SSE event emitted during streaming analysis."""
+
+    event_type: Literal[
+        "agent_start",
+        "tool_call",
+        "agent_complete",
+        "analysis_complete",
+        "error",
+    ]
+    agent_name: str = ""
+    data: dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class AgentMessage(BaseModel):

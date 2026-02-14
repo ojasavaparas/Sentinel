@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException, Query
 from prometheus_client import generate_latest
 from starlette.responses import Response as StarletteResponse
+from starlette.responses import StreamingResponse
 
 from agent.models import Alert, IncidentReport
 from api.deps import get_analyzer, get_incident_store, get_rag_engine
@@ -37,6 +40,42 @@ async def analyze_incident(alert: Alert) -> IncidentReport:
         return report
     finally:
         sentinel_active_analyses.dec()
+
+
+@router.post("/analyze/stream")
+async def analyze_incident_stream(alert: Alert) -> StreamingResponse:
+    """Run incident analysis with real-time SSE progress events."""
+    from monitoring.metrics import sentinel_active_analyses
+
+    analyzer = get_analyzer()
+    store = get_incident_store()
+
+    sentinel_active_analyses.inc()
+
+    async def _event_generator() -> AsyncIterator[str]:
+        try:
+            async for event in analyzer.analyze_stream(alert):
+                payload = json.dumps(event.model_dump(mode="json"), default=str)
+                yield f"event: {event.event_type}\ndata: {payload}\n\n"
+
+                # Store the final report
+                if event.event_type == "analysis_complete":
+                    report_data = event.data.get("report")
+                    if report_data:
+                        report = IncidentReport.model_validate(report_data)
+                        store[report.incident_id] = report
+                        logger.info(
+                            "api_stream_analyze_complete",
+                            incident_id=report.incident_id,
+                        )
+        finally:
+            sentinel_active_analyses.dec()
+
+    return StreamingResponse(
+        _event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/incidents")

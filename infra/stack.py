@@ -24,6 +24,9 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
 )
 from aws_cdk import (
+    aws_iam as iam,
+)
+from aws_cdk import (
     aws_logs as logs,
 )
 from aws_cdk import (
@@ -262,8 +265,58 @@ class SentinelStack(Stack):
         )
 
         # ----------------------------------------------------------------------
+        # GitHub Actions OIDC — allows CD pipeline to push to ECR & update ECS
+        # ----------------------------------------------------------------------
+        github_repo = self.node.try_get_context("github_repo") or "ojasaklechawormo/Sentinel"
+
+        github_oidc_provider = iam.OpenIdConnectProvider(
+            self,
+            "GitHubOidc",
+            url="https://token.actions.githubusercontent.com",
+            client_ids=["sts.amazonaws.com"],
+        )
+
+        github_actions_role = iam.Role(
+            self,
+            "GitHubActionsRole",
+            role_name="github-actions-sentinel",
+            assumed_by=iam.FederatedPrincipal(
+                github_oidc_provider.open_id_connect_provider_arn,
+                conditions={
+                    "StringEquals": {
+                        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                    },
+                    "StringLike": {
+                        "token.actions.githubusercontent.com:sub": f"repo:{github_repo}:*",
+                    },
+                },
+                assume_role_action="sts:AssumeRoleWithWebIdentity",
+            ),
+        )
+
+        # ECR push permissions
+        repository.grant_pull_push(github_actions_role)
+
+        # ECS update permissions
+        github_actions_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ecs:UpdateService",
+                    "ecs:DescribeServices",
+                    "ecs:DescribeTaskDefinition",
+                    "ecs:RegisterTaskDefinition",
+                    "iam:PassRole",
+                ],
+                resources=["*"],
+            )
+        )
+
+        # ----------------------------------------------------------------------
         # Outputs
         # ----------------------------------------------------------------------
         cdk.CfnOutput(self, "AlbDnsName", value=alb.load_balancer_dns_name)
         cdk.CfnOutput(self, "EcrRepoUri", value=repository.repository_uri)
         cdk.CfnOutput(self, "ServiceUrl", value=f"https://{domain_name}")
+        cdk.CfnOutput(
+            self, "GitHubActionsRoleArn", value=github_actions_role.role_arn
+        )

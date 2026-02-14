@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 
-from agent.models import AgentStep, ToolCall
+from agent.models import AgentStep, StreamEvent, ToolCall
 
 logger = structlog.get_logger()
 
@@ -16,8 +17,9 @@ logger = structlog.get_logger()
 class DecisionTracer:
     """Records and retrieves the full decision trace for an incident analysis."""
 
-    def __init__(self) -> None:
+    def __init__(self, event_queue: asyncio.Queue[StreamEvent] | None = None) -> None:
         self._traces: dict[str, list[AgentStep]] = {}
+        self._event_queue = event_queue
 
     def start_trace(self, trace_id: str) -> None:
         """Initialize a new trace."""
@@ -66,6 +68,17 @@ class DecisionTracer:
             log_kwargs["duration_ms"] = round(duration_ms, 2)
 
         logger.info("agent_step", **log_kwargs)
+
+        # Emit tool_call events to the streaming queue
+        if self._event_queue is not None:
+            for tc in step.tool_calls:
+                self._event_queue.put_nowait(
+                    StreamEvent(
+                        event_type="tool_call",
+                        agent_name=agent_name,
+                        data={"action": tc.tool_name},
+                    )
+                )
 
         return step
 

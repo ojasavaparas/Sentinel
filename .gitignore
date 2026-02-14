@@ -42,3 +42,6 @@ infra/cdk.context.json
 
 # Docker
 docker-compose.override.yml
+
+# Evaluation results
+evaluation/results/

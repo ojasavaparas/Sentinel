@@ -48,6 +48,45 @@ def _api_post(path: str, payload: dict, **kwargs) -> dict | None:
         return None
 
 
+def _api_post_stream(path: str, payload: dict) -> dict | None:
+    """POST with SSE streaming — shows live agent progress, returns final report."""
+    import json as _json
+
+    report = None
+    try:
+        with httpx.stream("POST", f"{API_BASE}{path}", json=payload, timeout=180) as resp:
+            resp.raise_for_status()
+            status = st.status("Running analysis pipeline...", expanded=True)
+            for line in resp.iter_lines():
+                if not line.startswith("data: "):
+                    continue
+                data = _json.loads(line[6:])
+                etype = data.get("event_type", "")
+                agent = data.get("agent_name", "")
+                icon = AGENT_ICONS.get(agent, "")
+
+                if etype == "agent_start":
+                    status.update(label=f"{icon} {agent.title()} agent running...")
+                    status.write(f"{icon} **{agent.title()}** started")
+                elif etype == "tool_call":
+                    action = data.get("data", {}).get("action", "")
+                    status.write(f"  :wrench: `{action}`")
+                elif etype == "agent_complete":
+                    tokens = data.get("data", {}).get("tokens_used", 0)
+                    msg = f"  :white_check_mark: **{agent.title()}** done ({tokens:,} tokens)"
+                    status.write(msg)
+                elif etype == "analysis_complete":
+                    report = data.get("data", {}).get("report")
+                    status.update(label="Analysis complete", state="complete", expanded=False)
+                elif etype == "error":
+                    msg = data.get("data", {}).get("message", "Unknown error")
+                    status.update(label="Analysis failed", state="error")
+                    st.error(msg)
+    except httpx.HTTPError as e:
+        st.error(f"API error: {e}")
+    return report
+
+
 def _severity_badge(severity: str) -> str:
     color = SEVERITY_COLORS.get(severity, "gray")
     return f":{color}[**{severity.upper()}**]"
@@ -137,8 +176,7 @@ with st.sidebar:
             "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {},
         }
-        with st.spinner("Running analysis pipeline..."):
-            report = _api_post("/api/v1/analyze", payload)
+        report = _api_post_stream("/api/v1/analyze/stream", payload)
         st.session_state.analysis_running = False
         if report:
             st.session_state.last_report = report
