@@ -176,6 +176,20 @@ class ToolRegistry:
             latency_ms=round(latency_ms, 2),
         )
 
+        # Record Prometheus metrics for this tool call
+        from monitoring.metrics import record_tool_call
+
+        record_tool_call(tool_name, latency_ms / 1000)
+
+        # For runbook searches, record RAG retrieval scores
+        if tool_name == "search_runbooks" and isinstance(result, dict):
+            rag_results = result.get("results", [])
+            scores = [r["similarity_score"] for r in rag_results if "similarity_score" in r]
+            if scores:
+                from monitoring.metrics import record_rag_query
+
+                record_rag_query(scores)
+
         return ToolCall(
             tool_name=tool_name,
             arguments=arguments,

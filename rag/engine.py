@@ -90,4 +90,9 @@ class RAGEngine:
             top_score=top_score,
         )
 
+        # Record RAG retrieval metrics
+        from monitoring.metrics import record_rag_query
+
+        record_rag_query([r.similarity_score for r in rag_results])
+
         return rag_results

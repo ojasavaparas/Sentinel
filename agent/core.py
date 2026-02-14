@@ -14,10 +14,15 @@ from agent.agents.research import ResearchAgent
 from agent.agents.triage import TriageAgent
 from agent.llm_client import LLMClient
 from agent.models import Alert, IncidentReport
+from monitoring.finops import CostTracker
+from monitoring.metrics import record_analysis_complete
 from monitoring.tracer import DecisionTracer
 from protocols.a2a import MessageBus, new_trace_id
 from rag.engine import RAGEngine
 from tools.registry import ToolRegistry
+
+# Module-level singleton so cost data persists across analyses
+_cost_tracker = CostTracker()
 
 logger = structlog.get_logger()
 
@@ -107,6 +112,21 @@ class IncidentAnalyzer:
             duration_seconds=round(duration, 2),
             requires_human_approval=remediation_result.get("requires_human_approval", True),
         )
+
+        # Record Prometheus metrics
+        record_analysis_complete(report)
+
+        # Record FinOps cost data per agent from the trace
+        for step in report.agent_trace:
+            if step.tokens_used > 0:
+                _cost_tracker.record_analysis(
+                    incident_id=incident_id,
+                    agent_name=step.agent_name,
+                    input_tokens=step.tokens_used // 2,  # approximate split
+                    output_tokens=step.tokens_used - step.tokens_used // 2,
+                )
+            if step.tool_calls:
+                _cost_tracker.record_tool_calls(incident_id, len(step.tool_calls))
 
         logger.info(
             "analysis_complete",

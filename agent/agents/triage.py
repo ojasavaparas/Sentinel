@@ -105,6 +105,11 @@ class TriageAgent:
         # Calculate cost (Claude Sonnet pricing: $3/MTok input, $15/MTok output)
         cost = (total_usage.input_tokens * 3.0 + total_usage.output_tokens * 15.0) / 1_000_000
 
+        # Record LLM metrics for this agent run
+        from monitoring.metrics import record_llm_call
+
+        record_llm_call("triage", total_usage.input_tokens, total_usage.output_tokens, cost)
+
         # Log the triage step
         self._tracer.log_step(
             trace_id=trace_id,

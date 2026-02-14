@@ -23,6 +23,11 @@ logger = structlog.get_logger()
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ANN001, ARG001
     """Startup and shutdown events."""
+    # Configure structured logging before anything else
+    from monitoring.logging import configure_logging
+
+    configure_logging()
+
     logger.info("sentinel_starting")
 
     # Initialize RAG engine — ingest runbooks if collection is empty

@@ -24,20 +24,19 @@ metrics_router = APIRouter()
 @router.post("/analyze", response_model=IncidentReport)
 async def analyze_incident(alert: Alert) -> IncidentReport:
     """Run full incident analysis pipeline on an alert."""
-    from monitoring.metrics import active_incidents, record_incident
+    from monitoring.metrics import sentinel_active_analyses
 
     analyzer = get_analyzer()
     store = get_incident_store()
 
-    active_incidents.inc()
+    sentinel_active_analyses.inc()
     try:
         report = await analyzer.analyze(alert)
         store[report.incident_id] = report
-        record_incident(report)
         logger.info("api_analyze_complete", incident_id=report.incident_id)
         return report
     finally:
-        active_incidents.dec()
+        sentinel_active_analyses.dec()
 
 
 @router.get("/incidents")
@@ -116,7 +115,7 @@ async def get_incident_trace(incident_id: str) -> list[dict[str, Any]]:
 @router.post("/runbooks/search")
 async def search_runbooks(body: dict[str, Any]) -> dict[str, Any]:
     """Search runbooks via RAG."""
-    from monitoring.metrics import rag_searches_total
+    from monitoring.metrics import sentinel_rag_queries_total
 
     query = body.get("query", "")
     top_k = body.get("top_k", 3)
@@ -128,7 +127,7 @@ async def search_runbooks(body: dict[str, Any]) -> dict[str, Any]:
     if engine is None:
         raise HTTPException(status_code=503, detail="RAG engine not initialized")
 
-    rag_searches_total.inc()
+    sentinel_rag_queries_total.inc()
     results = await engine.search(query, top_k=top_k)
 
     return {

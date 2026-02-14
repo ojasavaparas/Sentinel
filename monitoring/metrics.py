@@ -4,67 +4,126 @@ from __future__ import annotations
 
 from prometheus_client import Counter, Gauge, Histogram
 
-# Incident analysis metrics
-incidents_analyzed_total = Counter(
-    "sentinel_incidents_analyzed_total",
-    "Total number of incidents analyzed",
+# --- Incident analysis metrics ---
+
+sentinel_incident_analyses_total = Counter(
+    "sentinel_incident_analyses_total",
+    "Total number of incident analyses completed",
     ["severity"],
 )
 
-incident_duration_seconds = Histogram(
-    "sentinel_incident_duration_seconds",
-    "Time spent analyzing an incident",
+sentinel_incident_analysis_duration_seconds = Histogram(
+    "sentinel_incident_analysis_duration_seconds",
+    "Time spent analyzing an incident end-to-end",
     buckets=[1, 5, 10, 30, 60, 120],
 )
 
-# Agent metrics
-agent_tokens_used_total = Counter(
-    "sentinel_agent_tokens_used_total",
-    "Total tokens consumed by agents",
-    ["agent"],
+# --- Agent metrics ---
+
+sentinel_agent_steps_total = Counter(
+    "sentinel_agent_steps_total",
+    "Total number of agent steps executed",
+    ["agent_name"],
 )
 
-agent_cost_usd_total = Counter(
-    "sentinel_agent_cost_usd_total",
-    "Total cost in USD by agent",
-    ["agent"],
+# --- Tool metrics ---
+
+sentinel_tool_calls_total = Counter(
+    "sentinel_tool_calls_total",
+    "Total number of tool calls",
+    ["tool_name"],
 )
 
-# Tool metrics
-tool_call_duration_seconds = Histogram(
+sentinel_tool_call_duration_seconds = Histogram(
     "sentinel_tool_call_duration_seconds",
     "Tool call latency in seconds",
-    ["tool"],
+    ["tool_name"],
     buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0],
 )
 
-tool_calls_total = Counter(
-    "sentinel_tool_calls_total",
-    "Total number of tool calls",
-    ["tool"],
+# --- LLM token / cost metrics ---
+
+sentinel_llm_tokens_total = Counter(
+    "sentinel_llm_tokens_total",
+    "Total LLM tokens consumed",
+    ["direction", "agent_name"],
 )
 
-# System metrics
-active_incidents = Gauge(
-    "sentinel_active_incidents",
-    "Number of incidents currently being analyzed",
+sentinel_llm_cost_dollars_total = Counter(
+    "sentinel_llm_cost_dollars_total",
+    "Total LLM cost in USD",
+    ["agent_name"],
 )
 
-rag_searches_total = Counter(
-    "sentinel_rag_searches_total",
-    "Total number of RAG searches",
+# --- RAG metrics ---
+
+sentinel_rag_queries_total = Counter(
+    "sentinel_rag_queries_total",
+    "Total number of RAG vector searches",
+)
+
+sentinel_rag_retrieval_score = Histogram(
+    "sentinel_rag_retrieval_score",
+    "Distribution of RAG retrieval similarity scores",
+    buckets=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+)
+
+sentinel_rag_low_confidence_total = Counter(
+    "sentinel_rag_low_confidence_total",
+    "Total RAG queries where top result had low confidence (< 0.4)",
+)
+
+# --- System metrics ---
+
+sentinel_active_analyses = Gauge(
+    "sentinel_active_analyses",
+    "Number of incident analyses currently in progress",
+)
+
+sentinel_human_approval_required_total = Counter(
+    "sentinel_human_approval_required_total",
+    "Total analyses that required human approval",
 )
 
 
-def record_incident(report) -> None:  # noqa: ANN001
-    """Record metrics from a completed incident report."""
-    incidents_analyzed_total.labels(severity=report.alert.severity).inc()
-    incident_duration_seconds.observe(report.duration_seconds)
+# --- Helper functions ---
 
+
+def record_tool_call(tool_name: str, duration_seconds: float) -> None:
+    """Record a single tool call: increment counter and observe latency histogram."""
+    sentinel_tool_calls_total.labels(tool_name=tool_name).inc()
+    sentinel_tool_call_duration_seconds.labels(tool_name=tool_name).observe(duration_seconds)
+
+
+def record_llm_call(
+    agent_name: str,
+    input_tokens: int,
+    output_tokens: int,
+    cost: float,
+) -> None:
+    """Record LLM token usage and cost for an agent run."""
+    sentinel_llm_tokens_total.labels(direction="input", agent_name=agent_name).inc(input_tokens)
+    sentinel_llm_tokens_total.labels(direction="output", agent_name=agent_name).inc(output_tokens)
+    sentinel_llm_cost_dollars_total.labels(agent_name=agent_name).inc(cost)
+
+
+def record_rag_query(scores: list[float]) -> None:
+    """Record a RAG query: increment counter, observe score histogram, track low confidence."""
+    sentinel_rag_queries_total.inc()
+    for score in scores:
+        sentinel_rag_retrieval_score.observe(score)
+    if scores and max(scores) < 0.4:
+        sentinel_rag_low_confidence_total.inc()
+
+
+def record_analysis_complete(report) -> None:  # noqa: ANN001
+    """Record metrics from a completed incident analysis report."""
+    sentinel_incident_analyses_total.labels(severity=report.alert.severity).inc()
+    sentinel_incident_analysis_duration_seconds.observe(report.duration_seconds)
+
+    if report.requires_human_approval:
+        sentinel_human_approval_required_total.inc()
+
+    # Count agent steps and record per-step metrics
     for step in report.agent_trace:
-        agent_tokens_used_total.labels(agent=step.agent_name).inc(step.tokens_used)
-        agent_cost_usd_total.labels(agent=step.agent_name).inc(step.cost_usd)
-
-        for tc in step.tool_calls:
-            tool_calls_total.labels(tool=tc.tool_name).inc()
-            tool_call_duration_seconds.labels(tool=tc.tool_name).observe(tc.latency_ms / 1000)
+        sentinel_agent_steps_total.labels(agent_name=step.agent_name).inc()

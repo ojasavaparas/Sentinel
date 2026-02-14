@@ -1,4 +1,4 @@
-.PHONY: setup run api mcp test lint typecheck ingest docker-up docker-down demo
+.PHONY: setup run api mcp test lint typecheck ingest docker-up docker-down demo dashboard
 
 setup:
 	python -m venv .venv
@@ -33,3 +33,6 @@ docker-down:
 
 demo:
 	.venv/bin/python -m simulation.run_demo
+
+dashboard:
+	.venv/bin/streamlit run dashboard/app.py

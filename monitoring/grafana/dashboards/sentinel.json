@@ -1,0 +1,164 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Incident Analyses Over Time (by severity)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 20 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "increase(sentinel_incident_analyses_total[5m])",
+          "legendFormat": "{{ severity }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Average Analysis Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(sentinel_incident_analysis_duration_seconds_sum[5m]) / rate(sentinel_incident_analysis_duration_seconds_count[5m])",
+          "legendFormat": "avg duration",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Total LLM Cost & Cost Per Analysis",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(sentinel_llm_cost_dollars_total)",
+          "legendFormat": "total cost",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(sentinel_llm_cost_dollars_total) / sum(sentinel_incident_analyses_total)",
+          "legendFormat": "cost per analysis",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Tool Calls Breakdown",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum by (tool_name) (sentinel_tool_calls_total)",
+          "legendFormat": "{{ tool_name }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "RAG Retrieval Confidence Distribution",
+      "type": "histogram",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sentinel_rag_retrieval_score_bucket",
+          "legendFormat": "{{ le }}",
+          "refId": "A",
+          "format": "heatmap"
+        }
+      ]
+    },
+    {
+      "title": "Token Usage by Agent",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "stacking": { "mode": "normal" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (agent_name, direction) (sentinel_llm_tokens_total)",
+          "legendFormat": "{{ agent_name }} ({{ direction }})",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Human Approval Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 0.9 } ] } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(sentinel_human_approval_required_total) / sum(sentinel_incident_analyses_total)",
+          "legendFormat": "approval rate",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Active Analyses",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 5 } ] }, "min": 0, "max": 10 },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sentinel_active_analyses",
+          "legendFormat": "active",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["sentinel", "incident-analysis"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Sentinel - Incident Analysis",
+  "uid": "sentinel-overview",
+  "version": 1
+}

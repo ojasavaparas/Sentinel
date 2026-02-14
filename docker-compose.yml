@@ -1,21 +1,20 @@
 services:
-  sentinel:
+  api:
     build: .
     ports:
       - "8000:8000"
     env_file:
       - .env
-    volumes:
-      - ./chroma_data:/app/chroma_data
-      - ./runbooks:/app/runbooks
+    depends_on:
+      - chromadb
+      - prometheus
 
-  dashboard:
-    build: .
-    command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+  chromadb:
+    image: chromadb/chroma:latest
     ports:
-      - "8501:8501"
-    env_file:
-      - .env
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
 
   prometheus:
     image: prom/prometheus:latest
@@ -28,5 +27,12 @@ services:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/:/etc/grafana/provisioning/
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=sentinel
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  chroma_data:
