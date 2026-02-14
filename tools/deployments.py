@@ -4,19 +4,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "simulation" / "data" / "deployments.json"
 
 
-def _load_deployments() -> list[dict]:
+def _load_deployments() -> list[dict[str, Any]]:
     with open(_DATA_PATH) as f:
-        return json.load(f)
+        result: list[dict[str, Any]] = json.load(f)
+        return result
 
 
 async def get_recent_deployments(
     service: str | None = None,
     limit: int = 5,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Retrieve recent deployments, optionally filtered by service.
 
     Args:

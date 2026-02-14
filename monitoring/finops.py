@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Claude Sonnet pricing (per token)
 CLAUDE_SONNET_INPUT = 3.0 / 1_000_000
@@ -20,7 +20,7 @@ class AnalysisCost:
     """Accumulated cost data for a single incident analysis."""
 
     incident_id: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     total_cost: float = 0.0
     by_agent: dict[str, float] = field(default_factory=dict)
     total_input_tokens: int = 0
@@ -58,7 +58,7 @@ class CostTracker:
         if incident_id in self._analyses:
             self._analyses[incident_id].tool_call_count += count
 
-    def get_analysis_cost(self, incident_id: str) -> dict:
+    def get_analysis_cost(self, incident_id: str) -> dict[str, object]:
         """Return cost breakdown for a single analysis."""
         entry = self._analyses.get(incident_id)
         if entry is None:
@@ -70,9 +70,9 @@ class CostTracker:
             "tool_call_count": entry.tool_call_count,
         }
 
-    def get_cost_summary(self, last_n_hours: int = 24) -> dict:
+    def get_cost_summary(self, last_n_hours: int = 24) -> dict[str, object]:
         """Return aggregate cost summary for recent analyses."""
-        cutoff = datetime.now(timezone.utc).timestamp() - last_n_hours * 3600
+        cutoff = datetime.now(UTC).timestamp() - last_n_hours * 3600
         recent = [
             a for a in self._analyses.values()
             if a.timestamp.timestamp() >= cutoff

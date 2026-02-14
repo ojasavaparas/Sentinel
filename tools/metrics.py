@@ -5,13 +5,15 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "simulation" / "data" / "metrics.json"
 
 
-def _load_metrics() -> list[dict]:
+def _load_metrics() -> list[dict[str, Any]]:
     with open(_DATA_PATH) as f:
-        return json.load(f)
+        result: list[dict[str, Any]] = json.load(f)
+        return result
 
 
 async def get_metrics(
@@ -19,7 +21,7 @@ async def get_metrics(
     metric_name: str | None = None,
     time_start: str | None = None,
     time_end: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Retrieve simulated metrics for a service.
 
     Args:

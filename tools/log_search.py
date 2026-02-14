@@ -5,13 +5,15 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "simulation" / "data" / "logs.json"
 
 
-def _load_logs() -> list[dict]:
+def _load_logs() -> list[dict[str, Any]]:
     with open(_DATA_PATH) as f:
-        return json.load(f)
+        result: list[dict[str, Any]] = json.load(f)
+        return result
 
 
 async def search_logs(
@@ -20,7 +22,7 @@ async def search_logs(
     time_start: str | None = None,
     time_end: str | None = None,
     query: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Search simulated logs with optional filters.
 
     Args:

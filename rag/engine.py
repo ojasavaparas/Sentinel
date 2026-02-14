@@ -7,6 +7,7 @@ from typing import Literal
 
 import chromadb
 import structlog
+from chromadb.api.models.Collection import Collection
 from pydantic import BaseModel, Field
 
 from rag.embeddings import get_embedding_model
@@ -41,10 +42,11 @@ class RAGEngine:
         persist_dir = chroma_persist_dir or os.environ.get("CHROMA_PERSIST_DIR", "./chroma_data")
         self._client = chromadb.PersistentClient(path=persist_dir)
         self._embedding_model = get_embedding_model()
+        self._collection: Collection | None = None
         try:
             self._collection = self._client.get_collection(name=COLLECTION_NAME)
         except Exception:
-            self._collection = None
+            pass
 
     async def search(self, query: str, top_k: int = 3) -> list[RAGResult]:
         """Search runbooks for chunks relevant to the query."""
@@ -55,7 +57,7 @@ class RAGEngine:
         query_embedding = self._embedding_model.embed([query])[0]
 
         results = self._collection.query(
-            query_embeddings=[query_embedding],
+            query_embeddings=[query_embedding],  # type: ignore[arg-type]
             n_results=min(top_k, self._collection.count()),
             include=["documents", "metadatas", "distances"],
         )
@@ -74,10 +76,10 @@ class RAGEngine:
             rag_results.append(
                 RAGResult(
                     content=doc,
-                    source_file=meta["source_file"],
-                    title=meta["title"],
+                    source_file=str(meta["source_file"]),
+                    title=str(meta["title"]),
                     similarity_score=round(similarity, 4),
-                    chunk_index=int(meta["chunk_index"]),
+                    chunk_index=int(meta["chunk_index"]),  # type: ignore[arg-type]
                     confidence=confidence,
                 )
             )

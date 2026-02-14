@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from prometheus_client import Counter, Gauge, Histogram
+
+if TYPE_CHECKING:
+    from agent.models import IncidentReport
 
 # --- Incident analysis metrics ---
 
@@ -116,7 +121,7 @@ def record_rag_query(scores: list[float]) -> None:
         sentinel_rag_low_confidence_total.inc()
 
 
-def record_analysis_complete(report) -> None:  # noqa: ANN001
+def record_analysis_complete(report: IncidentReport) -> None:
     """Record metrics from a completed incident analysis report."""
     sentinel_incident_analyses_total.labels(severity=report.alert.severity).inc()
     sentinel_incident_analysis_duration_seconds.observe(report.duration_seconds)

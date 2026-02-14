@@ -97,8 +97,8 @@ def ingest_runbooks(
     collection.add(
         ids=all_ids,
         documents=all_chunks,
-        embeddings=embeddings,
-        metadatas=all_metadatas,
+        embeddings=embeddings,  # type: ignore[arg-type]
+        metadatas=all_metadatas,  # type: ignore[arg-type]
     )
 
     print(f"Stored {collection.count()} chunks in ChromaDB collection '{COLLECTION_NAME}'")

@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "simulation" / "data" / "dependencies.json"
 
 
-def _load_dependencies() -> list[dict]:
+def _load_dependencies() -> list[dict[str, Any]]:
     with open(_DATA_PATH) as f:
-        return json.load(f)
+        result: list[dict[str, Any]] = json.load(f)
+        return result
 
 
-async def get_service_dependencies(service: str) -> dict:
+async def get_service_dependencies(service: str) -> dict[str, Any]:
     """Retrieve the dependency tree for a given service.
 
     Args:
