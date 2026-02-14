@@ -122,6 +122,7 @@ class TriageAgent:
         )
 
         # Parse the JSON response
+        result: dict[str, Any]
         try:
             result = json.loads(response.content)
         except json.JSONDecodeError:
@@ -137,7 +138,9 @@ class TriageAgent:
                     "affected_services": [alert.service],
                     "priority": "P1",
                     "summary": response.content,
-                    "delegation_instructions": f"Investigate {alert.service} for {alert.description}",
+                    "delegation_instructions": (
+                        f"Investigate {alert.service} for {alert.description}"
+                    ),
                 }
 
         logger.info(

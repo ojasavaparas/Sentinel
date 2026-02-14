@@ -73,8 +73,12 @@ class IncidentAnalyzer:
                 self._run_pipeline(alert, trace_id),
                 timeout=ANALYSIS_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
-            logger.error("analysis_timeout", incident_id=incident_id, timeout=ANALYSIS_TIMEOUT_SECONDS)
+        except TimeoutError:
+            logger.error(
+                "analysis_timeout",
+                incident_id=incident_id,
+                timeout=ANALYSIS_TIMEOUT_SECONDS,
+            )
             self._tracer.log_step(
                 trace_id=trace_id,
                 agent_name="orchestrator",
@@ -176,7 +180,11 @@ class IncidentAnalyzer:
         self._message_bus.send(
             from_agent="remediation",
             to_agent="orchestrator",
-            message_type="respond" if not remediation_result.get("requires_human_approval") else "escalate",
+            message_type=(
+                "respond"
+                if not remediation_result.get("requires_human_approval")
+                else "escalate"
+            ),
             content=remediation_result,
             trace_id=trace_id,
         )

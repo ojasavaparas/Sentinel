@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Ensure project root is on the path
@@ -89,7 +88,7 @@ async def analyze_incident(
         service=service,
         description=description,
         severity=severity,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         metadata={},
     )
 
@@ -119,7 +118,8 @@ async def search_runbooks(query: str) -> str:
     relevant procedures, commands, and escalation paths.
 
     Args:
-        query: Describe the issue or topic to search for (e.g. 'database connection pool exhaustion')
+        query: Describe the issue or topic to search for
+            (e.g. 'database connection pool exhaustion')
     """
     engine = _get_rag_engine()
     results = await engine.search(query, top_k=3)

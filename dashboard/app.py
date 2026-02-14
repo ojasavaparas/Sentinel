@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pandas as pd
@@ -135,7 +134,7 @@ with st.sidebar:
             "service": svc,
             "description": desc,
             "severity": sev,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {},
         }
         with st.spinner("Running analysis pipeline..."):
@@ -187,8 +186,9 @@ trace: list | None = None
 selected_id = st.session_state.selected_incident_id
 
 if selected_id:
-    if st.session_state.last_report and st.session_state.last_report.get("incident_id") == selected_id:
-        report = st.session_state.last_report
+    last = st.session_state.last_report
+    if last and last.get("incident_id") == selected_id:
+        report = last
     else:
         report = _api_get(f"/api/v1/incidents/{selected_id}")
         if report:
@@ -296,7 +296,8 @@ with tab_trace:
         st.subheader("Agent Decision Trace")
 
         if report:
-            st.caption(f"Incident **{report['incident_id']}** — {report.get('alert', {}).get('service', '')}")
+            svc_name = report.get("alert", {}).get("service", "")
+            st.caption(f"Incident **{report['incident_id']}** — {svc_name}")
 
         # --- Visual flow header ---
         flow_cols = st.columns([1, 0.3, 1, 0.3, 1])
@@ -308,7 +309,12 @@ with tab_trace:
                 st.markdown(f"### {icon} {name.title()}")
             if idx < len(agent_order) - 1:
                 with flow_cols[col_idx + 1]:
-                    st.markdown("<div style='text-align:center; padding-top:1.5rem; font-size:1.5rem'>→</div>", unsafe_allow_html=True)
+                    st.markdown(
+                        "<div style='text-align:center; "
+                        "padding-top:1.5rem; font-size:1.5rem'>"
+                        "→</div>",
+                        unsafe_allow_html=True,
+                    )
 
         st.divider()
 
@@ -335,7 +341,11 @@ with tab_trace:
                 if tool_calls:
                     st.markdown(f"**Tool Calls** ({len(tool_calls)})")
                     for tc in tool_calls:
-                        with st.expander(f"🔧 `{tc.get('tool_name', '?')}` — {tc.get('latency_ms', 0):.0f}ms"):
+                        tool_label = (
+                            f"🔧 `{tc.get('tool_name', '?')}` "
+                            f"— {tc.get('latency_ms', 0):.0f}ms"
+                        )
+                        with st.expander(tool_label):
                             st.markdown("**Input:**")
                             st.json(tc.get("arguments", {}))
                             if "result" in tc:
@@ -397,7 +407,8 @@ with tab_analytics:
 
         with m2:
             if all_incidents:
-                avg_cost = sum(i.get("total_cost_usd", 0) for i in all_incidents) / len(all_incidents)
+                total = sum(i.get("total_cost_usd", 0) for i in all_incidents)
+                avg_cost = total / len(all_incidents)
                 st.metric("Avg Cost / Analysis", f"${avg_cost:.4f}")
             else:
                 st.metric("Avg Cost / Analysis", "$0.00")

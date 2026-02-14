@@ -23,23 +23,33 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "description": (
             "Search application logs for a specific service. Use this to find error messages, "
             "warnings, and trace the timeline of an incident. You can filter by severity level, "
-            "time range, and keyword. Always start by searching for ERROR logs to identify failures."
+            "time range, and keyword. Always start by searching "
+            "for ERROR logs to identify failures."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "service": {
                     "type": "string",
-                    "description": "The service name to search logs for (e.g. 'payment-api', 'order-service')",
+                    "description": (
+                        "The service name to search logs for "
+                        "(e.g. 'payment-api', 'order-service')"
+                    ),
                 },
                 "severity": {
                     "type": "string",
                     "enum": ["INFO", "WARN", "ERROR"],
-                    "description": "Filter by log level. Use ERROR to find failures, WARN for degradation signals.",
+                    "description": (
+                        "Filter by log level. Use ERROR to find "
+                        "failures, WARN for degradation signals."
+                    ),
                 },
                 "time_start": {
                     "type": "string",
-                    "description": "ISO 8601 timestamp for the start of the search window (e.g. '2024-01-15T14:00:00Z')",
+                    "description": (
+                        "ISO 8601 timestamp for the start of the "
+                        "search window (e.g. '2024-01-15T14:00:00Z')"
+                    ),
                 },
                 "time_end": {
                     "type": "string",
@@ -47,7 +57,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 },
                 "query": {
                     "type": "string",
-                    "description": "Substring to search for in log messages (e.g. 'timeout', 'connection pool')",
+                    "description": (
+                        "Substring to search for in log messages "
+                        "(e.g. 'timeout', 'connection pool')"
+                    ),
                 },
             },
             "required": ["service"],
@@ -69,8 +82,15 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 },
                 "metric_name": {
                     "type": "string",
-                    "enum": ["latency_p99", "cpu_usage", "error_rate", "db_connection_pool", "memory_usage", "request_rate"],
-                    "description": "Specific metric to retrieve. If omitted, returns all metrics for the service.",
+                    "enum": [
+                        "latency_p99", "cpu_usage", "error_rate",
+                        "db_connection_pool", "memory_usage",
+                        "request_rate",
+                    ],
+                    "description": (
+                        "Specific metric to retrieve. If omitted, "
+                        "returns all metrics for the service."
+                    ),
                 },
                 "time_start": {
                     "type": "string",
@@ -96,7 +116,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
             "properties": {
                 "service": {
                     "type": "string",
-                    "description": "Service name to filter deployments for. Omit to see all recent deployments.",
+                    "description": (
+                        "Service name to filter deployments for. "
+                        "Omit to see all recent deployments."
+                    ),
                 },
                 "limit": {
                     "type": "integer",
@@ -112,7 +135,8 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "description": (
             "Get the dependency graph for a service — what databases, caches, external APIs, "
             "and internal services it depends on, along with their current health status. "
-            "Use this to assess blast radius and identify if a downstream dependency is causing issues."
+            "Use this to assess blast radius and identify if a "
+            "downstream dependency is causing issues."
         ),
         "input_schema": {
             "type": "object",
@@ -138,7 +162,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Search query describing the issue or topic to find runbooks for",
+                    "description": (
+                        "Search query describing the issue "
+                        "or topic to find runbooks for"
+                    ),
                 },
             },
             "required": ["query"],
@@ -198,7 +225,7 @@ class ToolRegistry:
             cost_usd=0.0,
         )
 
-    async def _handle_search_logs(self, arguments: dict[str, Any]) -> list[dict]:
+    async def _handle_search_logs(self, arguments: dict[str, Any]) -> list[dict[str, Any]]:
         return await search_logs(
             service=arguments["service"],
             severity=arguments.get("severity"),
@@ -207,7 +234,7 @@ class ToolRegistry:
             query=arguments.get("query"),
         )
 
-    async def _handle_get_metrics(self, arguments: dict[str, Any]) -> list[dict]:
+    async def _handle_get_metrics(self, arguments: dict[str, Any]) -> list[dict[str, Any]]:
         return await get_metrics(
             service=arguments["service"],
             metric_name=arguments.get("metric_name"),
@@ -215,13 +242,13 @@ class ToolRegistry:
             time_end=arguments.get("time_end"),
         )
 
-    async def _handle_get_deployments(self, arguments: dict[str, Any]) -> list[dict]:
+    async def _handle_get_deployments(self, arguments: dict[str, Any]) -> list[dict[str, Any]]:
         return await get_recent_deployments(
             service=arguments.get("service"),
             limit=arguments.get("limit", 5),
         )
 
-    async def _handle_get_dependencies(self, arguments: dict[str, Any]) -> dict:
+    async def _handle_get_dependencies(self, arguments: dict[str, Any]) -> dict[str, Any]:
         return await get_service_dependencies(
             service=arguments["service"],
         )

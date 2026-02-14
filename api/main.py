@@ -32,8 +32,9 @@ async def lifespan(app: FastAPI):  # noqa: ANN001, ARG001
 
     # Initialize RAG engine — ingest runbooks if collection is empty
     try:
-        import chromadb
         import os
+
+        import chromadb
 
         persist_dir = os.environ.get("CHROMA_PERSIST_DIR", "./chroma_data")
         client = chromadb.PersistentClient(path=persist_dir)

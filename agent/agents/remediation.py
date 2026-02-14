@@ -50,13 +50,15 @@ class RemediationAgent:
                     f"Confidence: {research_result.get('confidence', 0.0)}\n\n"
                     f"Evidence:\n"
                     + "\n".join(f"- {e}" for e in research_result.get("evidence", []))
-                    + f"\n\nTimeline:\n"
+                    + "\n\nTimeline:\n"
                     + "\n".join(
                         f"- {t.get('timestamp', '?')}: {t.get('event', '?')}"
                         for t in research_result.get("timeline", [])
                     )
-                    + f"\n\nRelevant Runbooks: {', '.join(research_result.get('relevant_runbooks', []))}\n"
-                    f"Affected Services: {', '.join(research_result.get('affected_services', []))}\n\n"
+                    + "\n\nRelevant Runbooks: "
+                    + f"{', '.join(research_result.get('relevant_runbooks', []))}\n"
+                    + "Affected Services: "
+                    + f"{', '.join(research_result.get('affected_services', []))}\n\n"
                     f"Based on these findings, propose specific remediation steps. "
                     f"You may search runbooks for additional procedures if needed."
                 ),
@@ -123,6 +125,7 @@ class RemediationAgent:
         )
 
         # Parse the JSON response
+        result: dict[str, Any]
         try:
             result = json.loads(response.content)
         except json.JSONDecodeError:

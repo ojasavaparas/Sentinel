@@ -6,7 +6,7 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Ensure project root is on the path
@@ -53,7 +53,7 @@ async def run_demo() -> None:
             "Started approximately 30 minutes after latest deployment."
         ),
         severity="critical",
-        timestamp=datetime(2024, 1, 15, 14, 30, 0, tzinfo=timezone.utc),
+        timestamp=datetime(2024, 1, 15, 14, 30, 0, tzinfo=UTC),
         metadata={
             "current_p99_ms": 2100,
             "baseline_p99_ms": 180,

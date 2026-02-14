@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -47,7 +47,7 @@ class DecisionTracer:
             tool_calls=tool_calls or [],
             tokens_used=tokens_used,
             cost_usd=cost_usd,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
 
         if trace_id not in self._traces:

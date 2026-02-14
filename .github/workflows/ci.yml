@@ -24,9 +24,9 @@ jobs:
         run: ruff check .
 
       - name: Type check
-        run: mypy agent/ rag/ tools/ protocols/ api/ monitoring/
+        run: mypy agent/ rag/ tools/ protocols/ api/ monitoring/ --ignore-missing-imports
 
-      - name: Test
-        run: pytest -v
+      - name: Test with coverage
+        run: pytest -v --tb=short --cov=agent --cov=tools --cov=rag --cov=monitoring --cov-report=term-missing --cov-fail-under=80
         env:
           LLM_PROVIDER: mock

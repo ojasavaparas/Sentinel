@@ -10,7 +10,6 @@ from tools.log_search import search_logs
 from tools.metrics import get_metrics
 from tools.registry import ToolRegistry
 
-
 # --- Log Search Tests ---
 
 

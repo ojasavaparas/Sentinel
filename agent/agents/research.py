@@ -49,7 +49,8 @@ class ResearchAgent:
                     f"Affected Services: {', '.join(triage_result.get('affected_services', []))}\n"
                     f"Triage Summary: {triage_result.get('summary', '')}\n\n"
                     f"DELEGATION INSTRUCTIONS:\n"
-                    f"{triage_result.get('delegation_instructions', 'Investigate the incident thoroughly.')}\n\n"
+                    f"{triage_result.get('delegation_instructions', 'Investigate the incident thoroughly.')}"  # noqa: E501
+                    "\n\n"
                     f"Use your tools systematically to investigate. Check logs, metrics, "
                     f"deployments, and runbooks. Build a complete picture of what happened."
                 ),
@@ -147,6 +148,7 @@ class ResearchAgent:
         )
 
         # Parse the JSON response
+        result: dict[str, Any]
         try:
             result = json.loads(response.content)
         except json.JSONDecodeError:

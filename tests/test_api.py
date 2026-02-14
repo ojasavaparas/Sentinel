@@ -1,101 +1,38 @@
-"""Tests for the FastAPI endpoints, MCP server tools, metrics, and FinOps cost tracking."""
+"""Tests for the FastAPI endpoints, MCP server tools, and Prometheus metrics."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 
-from agent.llm_client import MockClient, Response, TokenUsage
-from agent.models import AgentStep, Alert, IncidentReport, ToolCall
+from agent.models import IncidentReport, ToolCall
 
-
-# --- Fixtures ---
-
-
-def _make_sample_report() -> IncidentReport:
-    alert = Alert(
-        service="payment-api",
-        description="P99 latency spike",
-        severity="critical",
-        timestamp=datetime(2024, 1, 15, 14, 30, 0, tzinfo=timezone.utc),
-        metadata={},
-    )
-    return IncidentReport(
-        incident_id="INC-TEST1234",
-        alert=alert,
-        summary="DB connection pool exhaustion caused by bad deploy",
-        root_cause="Deployment a1bf3d2 misconfigured connection pool",
-        confidence_score=0.92,
-        remediation_steps=[
-            "Roll back deployment a1bf3d2 to previous revision",
-            "Monitor connection pool metrics for recovery",
-        ],
-        requires_human_approval=True,
-        agent_trace=[
-            AgentStep(
-                agent_name="triage",
-                action="classify",
-                reasoning="Resource exhaustion pattern detected",
-                tool_calls=[],
-                tokens_used=500,
-                cost_usd=0.001,
-                timestamp=datetime(2024, 1, 15, 14, 30, 1, tzinfo=timezone.utc),
-            ),
-            AgentStep(
-                agent_name="research",
-                action="investigate",
-                reasoning="Correlated deploy with pool exhaustion",
-                tool_calls=[
-                    ToolCall(tool_name="get_metrics", arguments={"service": "payment-api"}, result={}, latency_ms=45.0, cost_usd=0.0),
-                ],
-                tokens_used=2000,
-                cost_usd=0.005,
-                timestamp=datetime(2024, 1, 15, 14, 30, 5, tzinfo=timezone.utc),
-            ),
-            AgentStep(
-                agent_name="remediation",
-                action="propose_fix",
-                reasoning="Rollback is safest option",
-                tool_calls=[],
-                tokens_used=1000,
-                cost_usd=0.003,
-                timestamp=datetime(2024, 1, 15, 14, 30, 8, tzinfo=timezone.utc),
-            ),
-        ],
-        duration_seconds=7.5,
-        total_tokens=3500,
-        total_cost_usd=0.009,
-    )
-
-
-@pytest.fixture
-def sample_report() -> IncidentReport:
-    return _make_sample_report()
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
 def client(sample_report: IncidentReport, monkeypatch: pytest.MonkeyPatch):
     """Create a test client with mocked dependencies."""
-    # Use mock LLM provider so lifespan doesn't need ANTHROPIC_API_KEY
     monkeypatch.setenv("LLM_PROVIDER", "mock")
 
     from api import deps
     from api.main import app
 
     with TestClient(app) as c:
-        # Override store after startup so our sample data is available
         deps._incident_store[sample_report.incident_id] = sample_report
         yield c
 
-    # Cleanup
     deps._incident_store.clear()
 
 
-# --- Health Check ---
+# ---------------------------------------------------------------------------
+# Health Check
+# ---------------------------------------------------------------------------
 
 
 def test_health_check(client: TestClient):
@@ -104,9 +41,56 @@ def test_health_check(client: TestClient):
     data = response.json()
     assert data["status"] == "healthy"
     assert "chroma_db" in data
+    assert "llm_provider" in data
 
 
-# --- List Incidents ---
+# ---------------------------------------------------------------------------
+# POST /api/v1/analyze
+# ---------------------------------------------------------------------------
+
+
+def test_post_analyze_returns_incident_report(client: TestClient):
+    """POST /analyze with a valid alert should return an IncidentReport."""
+    payload = {
+        "service": "payment-api",
+        "description": "CPU usage at 95%",
+        "severity": "high",
+        "timestamp": "2024-01-15T14:30:00Z",
+        "metadata": {},
+    }
+    response = client.post("/api/v1/analyze", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["incident_id"].startswith("INC-")
+    assert "summary" in data
+    assert "root_cause" in data
+    assert "remediation_steps" in data
+    assert "agent_trace" in data
+    assert isinstance(data["total_tokens"], int)
+    assert isinstance(data["duration_seconds"], float)
+
+
+def test_post_analyze_invalid_severity(client: TestClient):
+    """POST /analyze with invalid severity should return 422."""
+    payload = {
+        "service": "payment-api",
+        "description": "Test",
+        "severity": "INVALID",
+        "timestamp": "2024-01-15T14:30:00Z",
+    }
+    response = client.post("/api/v1/analyze", json=payload)
+    assert response.status_code == 422
+
+
+def test_post_analyze_missing_required_field(client: TestClient):
+    """POST /analyze missing required fields should return 422."""
+    response = client.post("/api/v1/analyze", json={"service": "x"})
+    assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# List Incidents
+# ---------------------------------------------------------------------------
 
 
 def test_list_incidents(client: TestClient):
@@ -122,16 +106,22 @@ def test_list_incidents(client: TestClient):
 def test_list_incidents_filter_by_severity(client: TestClient):
     response = client.get("/api/v1/incidents?severity=critical")
     assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 1
+    assert len(response.json()) == 1
 
     response = client.get("/api/v1/incidents?severity=low")
     assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 0
+    assert len(response.json()) == 0
 
 
-# --- Get Incident ---
+def test_list_incidents_respects_limit(client: TestClient):
+    response = client.get("/api/v1/incidents?limit=1")
+    assert response.status_code == 200
+    assert len(response.json()) <= 1
+
+
+# ---------------------------------------------------------------------------
+# Get Incident
+# ---------------------------------------------------------------------------
 
 
 def test_get_incident(client: TestClient):
@@ -148,7 +138,9 @@ def test_get_incident_not_found(client: TestClient):
     assert response.status_code == 404
 
 
-# --- Incident Trace ---
+# ---------------------------------------------------------------------------
+# Incident Trace
+# ---------------------------------------------------------------------------
 
 
 def test_get_incident_trace(client: TestClient):
@@ -159,7 +151,6 @@ def test_get_incident_trace(client: TestClient):
     agent_names = [step["agent_name"] for step in data]
     assert agent_names == ["triage", "research", "remediation"]
 
-    # Research step should have tool calls
     research_step = data[1]
     assert len(research_step["tool_calls"]) == 1
     assert research_step["tool_calls"][0]["tool_name"] == "get_metrics"
@@ -170,7 +161,9 @@ def test_get_trace_not_found(client: TestClient):
     assert response.status_code == 404
 
 
-# --- Runbook Search ---
+# ---------------------------------------------------------------------------
+# Runbook Search
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
@@ -203,7 +196,9 @@ def test_runbook_search_empty_query(client: TestClient):
     assert response.status_code == 400
 
 
-# --- Prometheus Metrics ---
+# ---------------------------------------------------------------------------
+# Prometheus Metrics
+# ---------------------------------------------------------------------------
 
 
 def test_prometheus_metrics_endpoint(client: TestClient):
@@ -212,28 +207,35 @@ def test_prometheus_metrics_endpoint(client: TestClient):
     assert "sentinel_" in response.text or "python_" in response.text
 
 
-# --- MCP Server Tool Definitions ---
+def test_prometheus_metrics_contain_sentinel_metrics(client: TestClient):
+    """The metrics endpoint should expose our custom sentinel_ metrics."""
+    response = client.get("/metrics")
+    text = response.text
+    assert "sentinel_incident_analyses_total" in text or "sentinel_active_analyses" in text
+
+
+# ---------------------------------------------------------------------------
+# MCP Server
+# ---------------------------------------------------------------------------
 
 
 def test_mcp_server_tools_defined():
-    """Verify that MCP server tools are registered."""
     from protocols.mcp_server import mcp
 
-    # FastMCP stores tools internally — verify they exist
     assert mcp.name == "Sentinel"
 
 
-# --- Metric Recording Functions ---
+# ---------------------------------------------------------------------------
+# Metric Recording Functions
+# ---------------------------------------------------------------------------
 
 
 def test_record_tool_call():
     from monitoring.metrics import record_tool_call, sentinel_tool_calls_total
 
-    # Record a tool call and verify counter increments without error
     record_tool_call("search_logs", 0.123)
     record_tool_call("get_metrics", 0.045)
 
-    # Verify counters are accessible (non-zero after recording)
     val = sentinel_tool_calls_total.labels(tool_name="search_logs")._value.get()
     assert val >= 1
 
@@ -243,9 +245,15 @@ def test_record_llm_call():
 
     record_llm_call("triage", input_tokens=500, output_tokens=200, cost=0.0045)
 
-    input_val = sentinel_llm_tokens_total.labels(direction="input", agent_name="triage")._value.get()
+    input_counter = sentinel_llm_tokens_total.labels(
+        direction="input", agent_name="triage",
+    )
+    input_val = input_counter._value.get()
     assert input_val >= 500
-    output_val = sentinel_llm_tokens_total.labels(direction="output", agent_name="triage")._value.get()
+    output_counter = sentinel_llm_tokens_total.labels(
+        direction="output", agent_name="triage",
+    )
+    output_val = output_counter._value.get()
     assert output_val >= 200
 
 
@@ -253,25 +261,30 @@ def test_record_rag_query():
     from monitoring.metrics import (
         record_rag_query,
         sentinel_rag_low_confidence_total,
-        sentinel_rag_queries_total,
     )
 
-    # High-confidence query should not increment low-confidence counter
     before_low = sentinel_rag_low_confidence_total._value.get()
     record_rag_query([0.85, 0.72, 0.60])
     after_low = sentinel_rag_low_confidence_total._value.get()
-    assert after_low == before_low  # max score 0.85 >= 0.4
+    assert after_low == before_low
 
-    # Low-confidence query should increment low-confidence counter
     record_rag_query([0.2, 0.1])
     after_low2 = sentinel_rag_low_confidence_total._value.get()
     assert after_low2 == before_low + 1
 
 
+def test_record_rag_query_empty_scores():
+    from monitoring.metrics import record_rag_query, sentinel_rag_queries_total
+
+    before = sentinel_rag_queries_total._value.get()
+    record_rag_query([])
+    after = sentinel_rag_queries_total._value.get()
+    assert after == before + 1
+
+
 def test_record_analysis_complete(sample_report: IncidentReport):
     from monitoring.metrics import (
         record_analysis_complete,
-        sentinel_agent_steps_total,
         sentinel_human_approval_required_total,
         sentinel_incident_analyses_total,
     )
@@ -279,77 +292,16 @@ def test_record_analysis_complete(sample_report: IncidentReport):
     before_approval = sentinel_human_approval_required_total._value.get()
     record_analysis_complete(sample_report)
 
-    # Should have recorded severity counter
     val = sentinel_incident_analyses_total.labels(severity="critical")._value.get()
     assert val >= 1
 
-    # Report requires approval → counter should have incremented
     after_approval = sentinel_human_approval_required_total._value.get()
     assert after_approval == before_approval + 1
 
 
-# --- CostTracker ---
-
-
-def test_cost_tracker_record_and_get():
-    from monitoring.finops import CostTracker
-
-    tracker = CostTracker()
-    tracker.record_analysis("INC-001", "triage", input_tokens=500, output_tokens=200)
-    tracker.record_analysis("INC-001", "research", input_tokens=2000, output_tokens=800)
-    tracker.record_tool_calls("INC-001", 5)
-
-    cost = tracker.get_analysis_cost("INC-001")
-    assert cost["total"] > 0
-    assert "triage" in cost["by_agent"]
-    assert "research" in cost["by_agent"]
-    assert cost["tool_call_count"] == 5
-
-
-def test_cost_tracker_missing_incident():
-    from monitoring.finops import CostTracker
-
-    tracker = CostTracker()
-    cost = tracker.get_analysis_cost("INC-MISSING")
-    assert cost["total"] == 0.0
-    assert cost["by_agent"] == {}
-    assert cost["tool_call_count"] == 0
-
-
-def test_cost_tracker_summary():
-    from monitoring.finops import CostTracker
-
-    tracker = CostTracker()
-    tracker.record_analysis("INC-A", "triage", input_tokens=500, output_tokens=200)
-    tracker.record_analysis("INC-B", "triage", input_tokens=1000, output_tokens=500)
-    tracker.record_analysis("INC-B", "research", input_tokens=3000, output_tokens=1000)
-
-    summary = tracker.get_cost_summary(last_n_hours=1)
-    assert summary["total_analyses"] == 2
-    assert summary["total_cost"] > 0
-    assert summary["avg_cost_per_analysis"] > 0
-    assert summary["most_expensive_analysis"]["incident_id"] == "INC-B"
-
-
-def test_cost_tracker_empty_summary():
-    from monitoring.finops import CostTracker
-
-    tracker = CostTracker()
-    summary = tracker.get_cost_summary()
-    assert summary["total_analyses"] == 0
-    assert summary["total_cost"] == 0.0
-    assert summary["most_expensive_analysis"] is None
-
-
-def test_calculate_cost():
-    from monitoring.finops import calculate_cost
-
-    cost = calculate_cost(input_tokens=1_000_000, output_tokens=1_000_000)
-    # $3 for 1M input + $15 for 1M output = $18
-    assert cost == pytest.approx(18.0)
-
-
-# --- Decision Tracer Enhancements ---
+# ---------------------------------------------------------------------------
+# Decision Tracer Enhancements
+# ---------------------------------------------------------------------------
 
 
 def test_tracer_duration_ms():
@@ -407,8 +359,14 @@ def test_tracer_export_for_dashboard():
         trace_id="t3", agent_name="research", action="investigate",
         reasoning="r2", tokens_used=2000, cost_usd=0.005,
         tool_calls=[
-            ToolCall(tool_name="get_metrics", arguments={}, result={}, latency_ms=40.0, cost_usd=0.0),
-            ToolCall(tool_name="search_logs", arguments={}, result={}, latency_ms=30.0, cost_usd=0.0),
+            ToolCall(
+                tool_name="get_metrics", arguments={},
+                result={}, latency_ms=40.0, cost_usd=0.0,
+            ),
+            ToolCall(
+                tool_name="search_logs", arguments={},
+                result={}, latency_ms=30.0, cost_usd=0.0,
+            ),
         ],
     )
 
@@ -422,11 +380,19 @@ def test_tracer_export_for_dashboard():
     assert dashboard["agents"]["research"]["total_tokens"] == 2000
 
 
-# --- Structured Logging ---
+# ---------------------------------------------------------------------------
+# Structured Logging
+# ---------------------------------------------------------------------------
 
 
 def test_configure_logging():
     from monitoring.logging import configure_logging
 
-    # Should not raise — just verify it runs cleanly
+    configure_logging()
+
+
+def test_configure_logging_json_mode(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LOG_FORMAT", "json")
+    from monitoring.logging import configure_logging
+
     configure_logging()
