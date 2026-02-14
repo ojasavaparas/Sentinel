@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 import structlog
 
@@ -22,7 +22,7 @@ class MessageBus:
         self,
         from_agent: str,
         to_agent: str,
-        message_type: str,
+        message_type: Literal["delegate", "respond", "escalate"],
         content: dict[str, Any],
         trace_id: str,
     ) -> AgentMessage:

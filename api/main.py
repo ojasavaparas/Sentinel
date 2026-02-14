@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 
 from agent.core import IncidentAnalyzer
 from agent.llm_client import create_client
@@ -21,7 +24,7 @@ logger = structlog.get_logger()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # noqa: ANN001, ARG001
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     """Startup and shutdown events."""
     # Configure structured logging before anything else
     from monitoring.logging import configure_logging
@@ -83,9 +86,9 @@ app.add_middleware(
 
 # Request logging middleware
 @app.middleware("http")
-async def log_requests(request: Request, call_next):  # noqa: ANN001
+async def log_requests(request: Request, call_next: Any) -> Response:
     start = time.perf_counter()
-    response = await call_next(request)
+    response: Response = await call_next(request)
     duration_ms = (time.perf_counter() - start) * 1000
 
     logger.info(

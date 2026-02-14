@@ -7,6 +7,7 @@ import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 # Ensure project root is on the path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -87,7 +88,7 @@ async def analyze_incident(
     alert = Alert(
         service=service,
         description=description,
-        severity=severity,
+        severity=severity,  # type: ignore[arg-type]
         timestamp=datetime.now(UTC),
         metadata={},
     )
@@ -153,7 +154,7 @@ async def get_service_health(service: str) -> str:
         return json.dumps({"error": f"No metrics found for service '{service}'"})
 
     # Group by metric name, take the latest value
-    latest: dict[str, dict] = {}
+    latest: dict[str, dict[str, Any]] = {}
     for m in metrics:
         name = m["metric_name"]
         if name not in latest or m["timestamp"] > latest[name]["timestamp"]:
