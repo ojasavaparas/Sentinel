@@ -33,5 +33,12 @@ chroma_data/
 .DS_Store
 Thumbs.db
 
+# Coverage
+.coverage
+
+# CDK
+infra/cdk.out/
+infra/cdk.context.json
+
 # Docker
 docker-compose.override.yml
