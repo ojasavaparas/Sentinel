@@ -51,7 +51,7 @@ jobs:
           # Force new deployment with latest image
           aws ecs update-service \
             --cluster sentinel-cluster \
-            --service SentinelService \
+            --service SentinelStack-SentinelService9567C89B-CzsPj0LnoGjJ \
             --force-new-deployment \
             --region us-east-1
 
@@ -59,7 +59,7 @@ jobs:
         run: |
           aws ecs wait services-stable \
             --cluster sentinel-cluster \
-            --services SentinelService \
+            --services SentinelStack-SentinelService9567C89B-CzsPj0LnoGjJ \
             --region us-east-1
 
       - name: Health check
