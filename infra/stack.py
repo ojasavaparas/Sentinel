@@ -35,6 +35,9 @@ from aws_cdk import (
 from aws_cdk import (
     aws_route53_targets as targets,
 )
+from aws_cdk import (
+    aws_secretsmanager as secretsmanager,
+)
 from constructs import Construct
 
 
@@ -133,8 +136,14 @@ class SentinelStack(Stack):
             environment={
                 "LLM_PROVIDER": "anthropic",
                 "LLM_MODEL": "claude-sonnet-4-20250514",
-                "ANTHROPIC_API_KEY": self.node.try_get_context("anthropic_api_key") or "",
                 "LOG_FORMAT": "json",
+            },
+            secrets={
+                "ANTHROPIC_API_KEY": ecs.Secret.from_secrets_manager(
+                    secretsmanager.Secret.from_secret_name_v2(
+                        self, "AnthropicApiKey", "sentinel/anthropic-api-key"
+                    )
+                ),
             },
             health_check=ecs.HealthCheck(
                 command=[
