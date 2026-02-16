@@ -10,7 +10,7 @@ from typing import Any
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.responses import Response
 
 from agent.core import IncidentAnalyzer
@@ -115,22 +115,14 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-# Root route
-@app.get("/")
-async def root() -> dict[str, Any]:
-    """Landing page with API overview."""
-    return {
-        "name": "Sentinel",
-        "description": "Multi-agent AI system for automated production incident analysis",
-        "version": "0.1.0",
-        "endpoints": {
-            "analyze": "POST /api/v1/analyze",
-            "analyze_stream": "POST /api/v1/analyze/stream",
-            "incidents": "GET /api/v1/incidents",
-            "health": "GET /api/v1/health",
-            "docs": "GET /docs",
-        },
-    }
+# Root route — serve the web dashboard
+@app.get("/", response_class=HTMLResponse)
+async def root() -> HTMLResponse:
+    """Serve the Sentinel web dashboard."""
+    import pathlib
+
+    template = pathlib.Path(__file__).parent / "templates" / "index.html"
+    return HTMLResponse(content=template.read_text())
 
 
 # Include routers
