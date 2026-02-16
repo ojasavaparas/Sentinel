@@ -267,7 +267,7 @@ class SentinelStack(Stack):
         # ----------------------------------------------------------------------
         # GitHub Actions OIDC — allows CD pipeline to push to ECR & update ECS
         # ----------------------------------------------------------------------
-        github_repo = self.node.try_get_context("github_repo") or "ojasaklechawormo/Sentinel"
+        github_repo = self.node.try_get_context("github_repo") or "ojasavaparas/Sentinel"
 
         github_oidc_provider = iam.OpenIdConnectProvider(
             self,
