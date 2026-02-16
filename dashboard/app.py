@@ -8,7 +8,7 @@ import httpx
 import pandas as pd
 import streamlit as st
 
-API_BASE = "http://localhost:8000"
+API_BASE = "https://agent.ojasavaparas.com"
 
 # ---------------------------------------------------------------------------
 # Helpers

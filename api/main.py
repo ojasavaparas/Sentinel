@@ -115,6 +115,24 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
+# Root route
+@app.get("/")
+async def root() -> dict[str, Any]:
+    """Landing page with API overview."""
+    return {
+        "name": "Sentinel",
+        "description": "Multi-agent AI system for automated production incident analysis",
+        "version": "0.1.0",
+        "endpoints": {
+            "analyze": "POST /api/v1/analyze",
+            "analyze_stream": "POST /api/v1/analyze/stream",
+            "incidents": "GET /api/v1/incidents",
+            "health": "GET /api/v1/health",
+            "docs": "GET /docs",
+        },
+    }
+
+
 # Include routers
 app.include_router(router)
 app.include_router(metrics_router)
