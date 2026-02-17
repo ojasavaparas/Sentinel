@@ -19,9 +19,7 @@
       --orange: #f59e0b;
       --blue: #3b82f6;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
@@ -32,621 +30,778 @@
     /* Header */
     .header {
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      padding: 0.75rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10, 10, 15, 0.95);
       backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10, 10, 15, 0.9);
     }
-
+    .header-left { display: flex; align-items: center; gap: 2rem; }
     .header h1 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 1.2rem; font-weight: 600;
+      display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer;
     }
-
     .header .badge {
-      font-size: 0.7rem;
-      background: var(--accent);
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      font-weight: 500;
+      font-size: 0.65rem; background: var(--accent);
+      padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 500;
     }
-
-    .header-links { display: flex; gap: 1rem; }
+    .header-links { display: flex; gap: 1.5rem; }
     .header-links a {
-      color: var(--text2);
-      text-decoration: none;
-      font-size: 0.85rem;
+      color: var(--text2); text-decoration: none; font-size: 0.85rem;
       transition: color 0.2s;
     }
     .header-links a:hover { color: var(--accent2); }
 
+    /* Navigation */
+    .nav {
+      display: flex; gap: 0.25rem;
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--text2);
+      padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;
+      border-radius: 8px; transition: all 0.2s; font-family: inherit;
+    }
+    .nav-btn:hover { color: var(--text); background: var(--surface); }
+    .nav-btn.active {
+      color: var(--accent2); background: rgba(108,99,255,0.1);
+      font-weight: 600;
+    }
+
     /* Layout */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem;
+    }
+    .card h3 {
+      font-size: 1.1rem; margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem;
     }
 
     /* Hero */
-    .hero {
-      text-align: center;
-      padding: 3rem 0 2rem;
-    }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
     .hero h2 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
+      font-size: 2.5rem; font-weight: 700; margin-bottom: 0.75rem;
       background: linear-gradient(135deg, var(--accent), var(--accent2), #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero p {
-      color: var(--text2);
-      font-size: 1.1rem;
-      max-width: 600px;
-      margin: 0 auto;
-      line-height: 1.6;
+      color: var(--text2); font-size: 1.1rem;
+      max-width: 600px; margin: 0 auto; line-height: 1.6;
     }
 
-    /* Pipeline visual */
+    /* Pipeline */
     .pipeline {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 2.5rem 0;
-      flex-wrap: wrap;
+      display: flex; justify-content: center; align-items: center;
+      gap: 0.5rem; margin: 2.5rem 0; flex-wrap: wrap;
     }
     .pipeline-step {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      text-align: center;
-      min-width: 140px;
-      transition: border-color 0.3s, transform 0.2s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.5rem; text-align: center;
+      min-width: 140px; transition: border-color 0.3s, transform 0.2s;
     }
-    .pipeline-step:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
-    }
+    .pipeline-step:hover { border-color: var(--accent); transform: translateY(-2px); }
     .pipeline-step .icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
     .pipeline-step .name { font-weight: 600; font-size: 0.9rem; }
     .pipeline-step .desc { color: var(--text2); font-size: 0.75rem; margin-top: 0.2rem; }
     .pipeline-arrow { color: var(--text2); font-size: 1.2rem; }
 
-    /* Analysis form */
-    .analysis-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      margin: 2rem 0;
-    }
-    .analysis-section h3 {
-      font-size: 1.1rem;
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-grid .full { grid-column: 1 / -1; }
-
     label {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--text2);
-      margin-bottom: 0.35rem;
-      font-weight: 500;
+      display: block; font-size: 0.8rem; color: var(--text2);
+      margin-bottom: 0.35rem; font-weight: 500;
     }
-
     input, textarea, select {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.65rem 0.85rem;
-      color: var(--text);
-      font-size: 0.9rem;
-      font-family: inherit;
-      transition: border-color 0.2s;
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.65rem 0.85rem; color: var(--text);
+      font-size: 0.9rem; font-family: inherit; transition: border-color 0.2s;
     }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
     textarea { resize: vertical; min-height: 70px; }
     select { cursor: pointer; }
 
     .btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.7rem 2rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      margin-top: 0.5rem;
+      background: var(--accent); color: white; border: none; border-radius: 8px;
+      padding: 0.7rem 2rem; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: background 0.2s, transform 0.1s; margin-top: 0.5rem;
     }
     .btn:hover { background: var(--accent2); }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-sm {
+      padding: 0.45rem 1.2rem; font-size: 0.8rem; margin-top: 0;
+    }
 
-    /* Stream output */
+    /* Stream */
     .stream-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-top: 1.5rem;
-      display: none;
-      max-height: 400px;
-      overflow-y: auto;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem; margin-top: 1.5rem; display: none;
+      max-height: 400px; overflow-y: auto;
     }
     .stream-box.active { display: block; }
-
     .stream-event {
-      padding: 0.4rem 0;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
+      padding: 0.4rem 0; font-size: 0.85rem;
+      display: flex; align-items: flex-start; gap: 0.5rem;
       animation: fadeIn 0.3s ease;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .stream-event .ev-icon { flex-shrink: 0; }
     .stream-event .ev-text { color: var(--text2); }
     .stream-event .ev-text strong { color: var(--text); }
     .stream-event.complete .ev-text { color: var(--green); }
     .stream-event.error .ev-text { color: var(--red); }
-
     .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 0.5rem;
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Report card */
-    .report {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      margin: 2rem 0;
-      display: none;
-    }
-    .report.active { display: block; }
-
-    .report h3 { margin-bottom: 1.25rem; }
-
+    /* Metrics row */
     .metrics-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
     }
-    .metric-card {
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 1rem;
-    }
+    .metric-card { background: var(--surface2); border-radius: 10px; padding: 1rem; }
     .metric-card .metric-label {
-      font-size: 0.7rem;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.3rem;
+      font-size: 0.7rem; color: var(--text2); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.3rem;
     }
-    .metric-card .metric-value {
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
+    .metric-card .metric-value { font-size: 1.4rem; font-weight: 700; }
 
     .severity-critical { color: var(--red); }
     .severity-high { color: var(--orange); }
     .severity-medium { color: var(--blue); }
     .severity-low { color: var(--green); }
 
-    .confidence-bar {
-      background: var(--surface2);
-      border-radius: 999px;
-      height: 8px;
-      margin: 0.5rem 0 1.5rem;
-      overflow: hidden;
-    }
-    .confidence-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.8s ease;
-    }
-
+    /* Report */
+    .report { display: none; }
+    .report.active { display: block; }
     .section-label {
-      font-size: 0.8rem;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      margin-top: 1.5rem;
+      font-size: 0.8rem; color: var(--text2); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.5rem; margin-top: 1.5rem;
     }
-
     .root-cause {
-      background: var(--surface2);
-      border-left: 3px solid var(--accent);
-      padding: 1rem 1.25rem;
-      border-radius: 0 8px 8px 0;
-      line-height: 1.6;
-      font-size: 0.9rem;
+      background: var(--surface2); border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem; border-radius: 0 8px 8px 0;
+      line-height: 1.6; font-size: 0.9rem;
     }
-
-    .remediation-list {
-      list-style: none;
-      margin-top: 0.5rem;
+    .confidence-bar {
+      background: var(--surface2); border-radius: 999px; height: 8px;
+      margin: 0.5rem 0 1.5rem; overflow: hidden;
     }
+    .confidence-fill { height: 100%; border-radius: 999px; transition: width 0.8s ease; }
+    .remediation-list { list-style: none; margin-top: 0.5rem; }
     .remediation-list li {
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-      display: flex;
-      gap: 0.5rem;
-      line-height: 1.5;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.9rem; display: flex; gap: 0.5rem; line-height: 1.5;
     }
     .remediation-list li:last-child { border-bottom: none; }
     .step-num {
-      background: var(--accent);
-      color: white;
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 0.1rem;
+      background: var(--accent); color: white; width: 22px; height: 22px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1rem;
     }
-
     .approval-banner {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 10px;
-      padding: 1rem 1.25rem;
-      margin-top: 1.5rem;
-      font-size: 0.85rem;
-      color: var(--orange);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; padding: 1rem 1.25rem; margin-top: 1.5rem;
+      font-size: 0.85rem; color: var(--orange);
+      display: flex; align-items: center; gap: 0.5rem;
     }
 
     /* Trace */
     .trace-step {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 0.75rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.75rem;
     }
     .trace-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 0.5rem;
     }
     .trace-header .agent-label { font-weight: 600; font-size: 0.9rem; }
     .trace-header .trace-tokens { font-size: 0.75rem; color: var(--text2); }
-    .trace-tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-top: 0.4rem;
-    }
+    .trace-tools { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
     .tool-chip {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.2rem 0.6rem;
-      font-size: 0.75rem;
-      color: var(--text2);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.2rem 0.6rem; font-size: 0.75rem; color: var(--text2);
       font-family: 'SF Mono', 'Fira Code', monospace;
     }
 
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: 3rem 0 2rem;
-      color: var(--text2);
-      font-size: 0.8rem;
-    }
-    .footer a { color: var(--accent); text-decoration: none; }
-
-    /* Recent incidents */
-    .incidents-list {
-      margin-top: 1rem;
-    }
+    /* Incidents table */
     .incident-row {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-      gap: 1rem;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
-      align-items: center;
-      cursor: pointer;
-      transition: background 0.2s;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
+      font-size: 0.85rem; align-items: center; cursor: pointer; transition: background 0.2s;
     }
     .incident-row:hover { background: var(--surface2); border-radius: 8px; }
-    .incident-row .col-header {
-      color: var(--text2);
-      font-size: 0.7rem;
-      text-transform: uppercase;
+    .incident-row.header-row { cursor: default; }
+    .incident-row.header-row:hover { background: none; }
+    .col-header {
+      color: var(--text2); font-size: 0.7rem; text-transform: uppercase;
       letter-spacing: 0.05em;
-      cursor: default;
     }
-    .incident-row .col-header:hover { background: none; }
+
+    /* Health */
+    .health-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .health-card {
+      background: var(--surface2); border-radius: 12px; padding: 1.25rem;
+      border: 1px solid var(--border);
+    }
+    .health-card .h-label {
+      font-size: 0.75rem; color: var(--text2); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.5rem;
+    }
+    .health-card .h-value { font-size: 1.1rem; font-weight: 600; }
+    .status-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      margin-right: 0.4rem;
+    }
+    .status-dot.ok { background: var(--green); }
+    .status-dot.err { background: var(--red); }
+    .status-dot.warn { background: var(--orange); }
+
+    /* Runbook results */
+    .runbook-result {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+    }
+    .runbook-result .rb-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .runbook-result .rb-title { font-weight: 600; font-size: 0.95rem; }
+    .runbook-result .rb-score {
+      font-size: 0.75rem; padding: 0.2rem 0.6rem;
+      border-radius: 999px; font-weight: 600;
+    }
+    .rb-score.high { background: rgba(34,197,94,0.15); color: var(--green); }
+    .rb-score.medium { background: rgba(245,158,11,0.15); color: var(--orange); }
+    .rb-score.low { background: rgba(239,68,68,0.15); color: var(--red); }
+    .runbook-result .rb-source {
+      font-size: 0.75rem; color: var(--text2); margin-bottom: 0.5rem;
+    }
+    .runbook-result .rb-content {
+      font-size: 0.85rem; line-height: 1.6; color: var(--text2);
+      white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+    }
+
+    /* Prometheus metrics */
+    .prom-group { margin-bottom: 1.5rem; }
+    .prom-group h4 {
+      font-size: 0.85rem; color: var(--accent2); margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .prom-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.4rem 0.75rem; font-size: 0.8rem;
+      border-bottom: 1px solid rgba(42,42,58,0.5);
+    }
+    .prom-row:last-child { border-bottom: none; }
+    .prom-labels { color: var(--text2); font-family: 'SF Mono', monospace; font-size: 0.75rem; }
+    .prom-val { font-weight: 700; font-family: 'SF Mono', monospace; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 3rem; color: var(--text2); font-size: 0.9rem;
+    }
 
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; }
-      .pipeline { gap: 0.3rem; }
       .pipeline-step { min-width: 100px; padding: 0.75rem 1rem; }
       .pipeline-arrow { display: none; }
       .hero h2 { font-size: 1.8rem; }
       .incident-row { grid-template-columns: 1fr 1fr; }
+      .nav { gap: 0; }
+      .nav-btn { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>Sentinel <span class="badge">v0.1.0</span></h1>
-    <div class="header-links">
-      <a href="/docs">API Docs</a>
-      <a href="/api/v1/health">Health</a>
-      <a href="https://github.com/ojasavaparas/Sentinel" target="_blank">GitHub</a>
-    </div>
+<div class="header">
+  <div class="header-left">
+    <h1 onclick="navigate('dashboard')">Sentinel <span class="badge">v0.1.0</span></h1>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="dashboard" onclick="navigate('dashboard')">Dashboard</button>
+      <button class="nav-btn" data-page="incidents" onclick="navigate('incidents')">Incidents</button>
+      <button class="nav-btn" data-page="runbooks" onclick="navigate('runbooks')">Runbooks</button>
+      <button class="nav-btn" data-page="health" onclick="navigate('health')">Health</button>
+      <button class="nav-btn" data-page="metrics" onclick="navigate('metrics')">Metrics</button>
+    </nav>
+  </div>
+  <div class="header-links">
+    <a href="/docs" target="_blank">API Docs</a>
+    <a href="https://github.com/ojasavaparas/Sentinel" target="_blank">GitHub</a>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD PAGE ==================== -->
+<div class="container page active" id="page-dashboard">
+  <div class="hero">
+    <h2>Incident Analysis Agent</h2>
+    <p>Multi-agent AI system that triages, investigates, and remediates production incidents autonomously.</p>
   </div>
 
-  <div class="container">
-
-    <div class="hero">
-      <h2>Incident Analysis Agent</h2>
-      <p>Multi-agent AI system that triages, investigates, and remediates production incidents autonomously.</p>
-    </div>
-
-    <div class="pipeline">
-      <div class="pipeline-step">
-        <div class="icon">🚨</div>
-        <div class="name">Alert</div>
-        <div class="desc">Incoming incident</div>
-      </div>
-      <div class="pipeline-arrow">→</div>
-      <div class="pipeline-step">
-        <div class="icon">🔍</div>
-        <div class="name">Triage</div>
-        <div class="desc">Classify & prioritize</div>
-      </div>
-      <div class="pipeline-arrow">→</div>
-      <div class="pipeline-step">
-        <div class="icon">🔬</div>
-        <div class="name">Research</div>
-        <div class="desc">Logs, metrics, traces</div>
-      </div>
-      <div class="pipeline-arrow">→</div>
-      <div class="pipeline-step">
-        <div class="icon">🛠️</div>
-        <div class="name">Remediate</div>
-        <div class="desc">Fix & verify</div>
-      </div>
-      <div class="pipeline-arrow">→</div>
-      <div class="pipeline-step">
-        <div class="icon">📋</div>
-        <div class="name">Report</div>
-        <div class="desc">Full incident report</div>
-      </div>
-    </div>
-
-    <!-- Analysis Form -->
-    <div class="analysis-section">
-      <h3>🎯 Run Analysis</h3>
-      <form id="analysisForm" class="form-grid">
-        <div>
-          <label for="service">Service Name</label>
-          <input type="text" id="service" placeholder="e.g. payment-api" required />
-        </div>
-        <div>
-          <label for="severity">Severity</label>
-          <select id="severity">
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-        <div class="full">
-          <label for="description">Description</label>
-          <textarea id="description" placeholder="e.g. P99 latency spike to 2s, error rate jumped from 0.1% to 15%" required></textarea>
-        </div>
-        <div>
-          <button type="submit" class="btn" id="analyzeBtn">Analyze Incident</button>
-        </div>
-      </form>
-
-      <div class="stream-box" id="streamBox">
-        <div id="streamEvents"></div>
-      </div>
-    </div>
-
-    <!-- Report -->
-    <div class="report" id="reportCard">
-      <h3>📋 Incident Report</h3>
-      <div class="metrics-row" id="reportMetrics"></div>
-
-      <div class="section-label">Root Cause</div>
-      <div class="root-cause" id="rootCause"></div>
-
-      <div id="confidenceSection">
-        <div class="section-label">Confidence</div>
-        <div class="confidence-bar"><div class="confidence-fill" id="confidenceFill"></div></div>
-      </div>
-
-      <div class="section-label">Remediation Steps</div>
-      <ol class="remediation-list" id="remediationSteps"></ol>
-
-      <div id="approvalBanner" class="approval-banner" style="display:none">
-        ⚠️ <strong>Human approval required</strong> — remediation includes high-risk actions that need manual review.
-      </div>
-
-      <div class="section-label" style="margin-top:2rem">Agent Decision Trace</div>
-      <div id="traceSteps"></div>
-    </div>
-
-    <!-- Recent incidents -->
-    <div class="analysis-section" id="incidentsSection">
-      <h3>📊 Recent Incidents</h3>
-      <div class="incidents-list" id="incidentsList">
-        <div class="incident-row" style="cursor:default">
-          <div class="col-header">Service</div>
-          <div class="col-header">Severity</div>
-          <div class="col-header">Confidence</div>
-          <div class="col-header">Duration</div>
-          <div class="col-header">Cost</div>
-        </div>
-        <div id="incidentsBody"></div>
-      </div>
-    </div>
-
+  <div class="pipeline">
+    <div class="pipeline-step"><div class="icon">🚨</div><div class="name">Alert</div><div class="desc">Incoming incident</div></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step"><div class="icon">🔍</div><div class="name">Triage</div><div class="desc">Classify & prioritize</div></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step"><div class="icon">🔬</div><div class="name">Research</div><div class="desc">Logs, metrics, traces</div></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step"><div class="icon">🛠️</div><div class="name">Remediate</div><div class="desc">Fix & verify</div></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step"><div class="icon">📋</div><div class="name">Report</div><div class="desc">Full incident report</div></div>
   </div>
 
-  <div class="footer">
-    Built with FastAPI, Claude, and ChromaDB &middot; <a href="/docs">API Documentation</a>
+  <div class="card">
+    <h3>Run Analysis</h3>
+    <form id="analysisForm" class="form-grid">
+      <div>
+        <label for="service">Service Name</label>
+        <input type="text" id="service" placeholder="e.g. payment-api" required />
+      </div>
+      <div>
+        <label for="severity">Severity</label>
+        <select id="severity">
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="full">
+        <label for="description">Description</label>
+        <textarea id="description" placeholder="e.g. P99 latency spike to 2s, error rate jumped from 0.1% to 15%" required></textarea>
+      </div>
+      <div>
+        <button type="submit" class="btn" id="analyzeBtn">Analyze Incident</button>
+      </div>
+    </form>
+    <div class="stream-box" id="streamBox"><div id="streamEvents"></div></div>
   </div>
+
+  <div class="card report" id="reportCard">
+    <h3>Incident Report</h3>
+    <div class="metrics-row" id="reportMetrics"></div>
+    <div class="section-label">Root Cause</div>
+    <div class="root-cause" id="rootCause"></div>
+    <div id="confidenceSection">
+      <div class="section-label">Confidence</div>
+      <div class="confidence-bar"><div class="confidence-fill" id="confidenceFill"></div></div>
+    </div>
+    <div class="section-label">Remediation Steps</div>
+    <ol class="remediation-list" id="remediationSteps"></ol>
+    <div id="approvalBanner" class="approval-banner" style="display:none">
+      ⚠️ <strong>Human approval required</strong> — remediation includes high-risk actions that need manual review.
+    </div>
+    <div class="section-label" style="margin-top:2rem">Agent Decision Trace</div>
+    <div id="traceSteps"></div>
+  </div>
+</div>
+
+<!-- ==================== INCIDENTS PAGE ==================== -->
+<div class="container page" id="page-incidents">
+  <h2 style="margin-bottom:1.5rem">Incidents</h2>
+  <div class="card">
+    <div class="metrics-row" id="incidentStats"></div>
+  </div>
+  <div class="card">
+    <div class="incident-row header-row">
+      <div class="col-header">Service</div>
+      <div class="col-header">Severity</div>
+      <div class="col-header">Confidence</div>
+      <div class="col-header">Duration</div>
+      <div class="col-header">Cost</div>
+    </div>
+    <div id="incidentsBody"></div>
+  </div>
+
+  <!-- Incident detail (shown when clicking a row) -->
+  <div class="card report" id="incidentDetail">
+    <h3>Incident Detail</h3>
+    <div class="metrics-row" id="detailMetrics"></div>
+    <div class="section-label">Summary</div>
+    <div class="root-cause" id="detailSummary" style="border-left-color:var(--blue)"></div>
+    <div class="section-label">Root Cause</div>
+    <div class="root-cause" id="detailRootCause"></div>
+    <div class="section-label">Confidence</div>
+    <div class="confidence-bar"><div class="confidence-fill" id="detailConfFill"></div></div>
+    <div class="section-label">Remediation Steps</div>
+    <ol class="remediation-list" id="detailRemediation"></ol>
+    <div id="detailApproval" class="approval-banner" style="display:none">
+      ⚠️ <strong>Human approval required</strong> — remediation includes high-risk actions that need manual review.
+    </div>
+    <div class="section-label" style="margin-top:2rem">Agent Decision Trace</div>
+    <div id="detailTrace"></div>
+  </div>
+</div>
+
+<!-- ==================== RUNBOOKS PAGE ==================== -->
+<div class="container page" id="page-runbooks">
+  <h2 style="margin-bottom:1.5rem">Runbook Search</h2>
+  <div class="card">
+    <h3>Search Runbooks (RAG)</h3>
+    <div style="display:flex;gap:0.75rem;align-items:flex-end">
+      <div style="flex:1">
+        <label for="rbQuery">Query</label>
+        <input type="text" id="rbQuery" placeholder="e.g. database connection pool exhaustion" />
+      </div>
+      <div>
+        <label for="rbTopK">Results</label>
+        <select id="rbTopK" style="width:80px">
+          <option value="3">3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" onclick="searchRunbooks()">Search</button>
+    </div>
+  </div>
+  <div id="runbookResults"></div>
+</div>
+
+<!-- ==================== HEALTH PAGE ==================== -->
+<div class="container page" id="page-health">
+  <h2 style="margin-bottom:1.5rem">System Health</h2>
+  <div class="card">
+    <div class="health-grid" id="healthGrid">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>API Endpoints</h3>
+    <div id="endpointChecks"></div>
+  </div>
+</div>
+
+<!-- ==================== METRICS PAGE ==================== -->
+<div class="container page" id="page-metrics">
+  <h2 style="margin-bottom:1.5rem">Prometheus Metrics</h2>
+  <div class="card" id="metricsCard">
+    <div class="empty-state">Loading...</div>
+  </div>
+</div>
 
 <script>
 const ICONS = { triage: '🔍', research: '🔬', remediation: '🛠️', orchestrator: '🎯' };
 const SEV_CLASS = { critical: 'severity-critical', high: 'severity-high', medium: 'severity-medium', low: 'severity-low' };
 
-// Load recent incidents on page load
+// ===== NAVIGATION =====
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`.nav-btn[data-page="${page}"]`).classList.add('active');
+  window.location.hash = page;
+
+  if (page === 'incidents') loadIncidents();
+  if (page === 'health') loadHealth();
+  if (page === 'metrics') loadMetrics();
+}
+
+// Handle hash on page load and back/forward
+function handleHash() {
+  const hash = window.location.hash.slice(1);
+  const valid = ['dashboard', 'incidents', 'runbooks', 'health', 'metrics'];
+  if (hash && valid.includes(hash)) navigate(hash);
+}
+window.addEventListener('hashchange', handleHash);
+window.addEventListener('DOMContentLoaded', handleHash);
+
+// ===== INCIDENTS =====
 async function loadIncidents() {
   try {
-    const res = await fetch('/api/v1/incidents?limit=10');
+    const res = await fetch('/api/v1/incidents?limit=50');
     const data = await res.json();
     const body = document.getElementById('incidentsBody');
+
+    // Stats
+    const stats = document.getElementById('incidentStats');
+    const totalCost = data.reduce((s, i) => s + (i.total_cost_usd || 0), 0);
+    const avgConf = data.length ? data.reduce((s, i) => s + (i.confidence_score || 0), 0) / data.length : 0;
+    const avgDur = data.length ? data.reduce((s, i) => s + (i.duration_seconds || 0), 0) / data.length : 0;
+    stats.innerHTML = `
+      <div class="metric-card"><div class="metric-label">Total Incidents</div><div class="metric-value">${data.length}</div></div>
+      <div class="metric-card"><div class="metric-label">Total Cost</div><div class="metric-value">$${totalCost.toFixed(4)}</div></div>
+      <div class="metric-card"><div class="metric-label">Avg Confidence</div><div class="metric-value">${(avgConf*100).toFixed(0)}%</div></div>
+      <div class="metric-card"><div class="metric-label">Avg Duration</div><div class="metric-value">${avgDur.toFixed(1)}s</div></div>
+    `;
+
     if (!data.length) {
-      body.innerHTML = '<div style="padding:1rem;color:var(--text2);font-size:0.85rem">No incidents yet. Run an analysis above.</div>';
+      body.innerHTML = '<div class="empty-state">No incidents yet. Run an analysis from the Dashboard.</div>';
       return;
     }
     body.innerHTML = data.map(inc => `
-      <div class="incident-row" onclick="loadIncident('${inc.incident_id}')">
-        <div><strong>${inc.service}</strong><br><span style="color:var(--text2);font-size:0.75rem">${inc.incident_id}</span></div>
-        <div class="${SEV_CLASS[inc.severity] || ''}">${inc.severity.toUpperCase()}</div>
+      <div class="incident-row" onclick="loadIncidentDetail('${inc.incident_id}')">
+        <div><strong>${esc(inc.service)}</strong><br><span style="color:var(--text2);font-size:0.75rem">${esc(inc.incident_id)}</span></div>
+        <div class="${SEV_CLASS[inc.severity] || ''}">${esc(inc.severity).toUpperCase()}</div>
         <div>${(inc.confidence_score * 100).toFixed(0)}%</div>
         <div>${inc.duration_seconds.toFixed(1)}s</div>
         <div>$${inc.total_cost_usd.toFixed(4)}</div>
       </div>
     `).join('');
-  } catch (e) {
-    console.error('Failed to load incidents', e);
-  }
+  } catch (e) { console.error(e); }
 }
 
-async function loadIncident(id) {
+async function loadIncidentDetail(id) {
   try {
-    const [reportRes, traceRes] = await Promise.all([
-      fetch(`/api/v1/incidents/${id}`),
-      fetch(`/api/v1/incidents/${id}/trace`)
+    const [rRes, tRes] = await Promise.all([
+      fetch('/api/v1/incidents/' + id),
+      fetch('/api/v1/incidents/' + id + '/trace')
     ]);
-    const report = await reportRes.json();
-    const trace = await traceRes.json();
-    renderReport(report, trace);
+    const report = await rRes.json();
+    const trace = await tRes.json();
+    renderIncidentDetail(report, trace);
+  } catch (e) { console.error(e); }
+}
+
+function renderIncidentDetail(report, trace) {
+  const card = document.getElementById('incidentDetail');
+  card.classList.add('active');
+  card.scrollIntoView({ behavior: 'smooth' });
+
+  const a = report.alert || {};
+  const sc = SEV_CLASS[a.severity] || '';
+
+  document.getElementById('detailMetrics').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Incident</div><div class="metric-value" style="font-size:1rem">${esc(report.incident_id)}</div></div>
+    <div class="metric-card"><div class="metric-label">Service</div><div class="metric-value" style="font-size:1rem">${esc(a.service||'—')}</div></div>
+    <div class="metric-card"><div class="metric-label">Severity</div><div class="metric-value ${sc}">${esc((a.severity||'—')).toUpperCase()}</div></div>
+    <div class="metric-card"><div class="metric-label">Duration</div><div class="metric-value">${(report.duration_seconds||0).toFixed(1)}s</div></div>
+    <div class="metric-card"><div class="metric-label">Tokens</div><div class="metric-value">${(report.total_tokens||0).toLocaleString()}</div></div>
+    <div class="metric-card"><div class="metric-label">Cost</div><div class="metric-value">$${(report.total_cost_usd||0).toFixed(4)}</div></div>
+  `;
+  document.getElementById('detailSummary').textContent = report.summary || '';
+  document.getElementById('detailRootCause').textContent = report.root_cause || 'Unknown';
+
+  const conf = report.confidence_score || 0;
+  const fill = document.getElementById('detailConfFill');
+  fill.style.width = (conf*100) + '%';
+  fill.style.background = conf >= 0.7 ? 'var(--green)' : conf >= 0.4 ? 'var(--orange)' : 'var(--red)';
+
+  document.getElementById('detailRemediation').innerHTML = (report.remediation_steps||[]).map((s,i) =>
+    `<li><span class="step-num">${i+1}</span><span>${esc(s)}</span></li>`
+  ).join('');
+
+  document.getElementById('detailApproval').style.display = report.requires_human_approval ? 'flex' : 'none';
+
+  document.getElementById('detailTrace').innerHTML = (trace||[]).map(step => {
+    const icon = ICONS[step.agent_name] || '🤖';
+    const tools = (step.tool_calls||[]).map(tc =>
+      `<span class="tool-chip">${esc(tc.tool_name)} (${tc.latency_ms.toFixed(0)}ms)</span>`
+    ).join('');
+    return `<div class="trace-step">
+      <div class="trace-header">
+        <div class="agent-label">${icon} ${esc(step.agent_name)} — ${esc(step.action)}</div>
+        <div class="trace-tokens">${(step.tokens_used||0).toLocaleString()} tokens · $${(step.cost_usd||0).toFixed(4)}</div>
+      </div>
+      ${tools ? `<div class="trace-tools">${tools}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ===== RUNBOOKS =====
+async function searchRunbooks() {
+  const query = document.getElementById('rbQuery').value.trim();
+  if (!query) return;
+  const topK = parseInt(document.getElementById('rbTopK').value);
+  const container = document.getElementById('runbookResults');
+  container.innerHTML = '<div class="card"><div class="empty-state"><span class="spinner"></span> Searching...</div></div>';
+
+  try {
+    const res = await fetch('/api/v1/runbooks/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, top_k: topK })
+    });
+    const data = await res.json();
+    if (!data.results || !data.results.length) {
+      container.innerHTML = '<div class="card"><div class="empty-state">No results found.</div></div>';
+      return;
+    }
+    container.innerHTML = data.results.map(r => {
+      const scoreClass = r.confidence === 'high' ? 'high' : r.confidence === 'medium' ? 'medium' : 'low';
+      return `<div class="runbook-result">
+        <div class="rb-header">
+          <div class="rb-title">${esc(r.title)}</div>
+          <div class="rb-score ${scoreClass}">${(r.similarity_score * 100).toFixed(0)}% match</div>
+        </div>
+        <div class="rb-source">${esc(r.source_file)} · chunk ${r.chunk_index}</div>
+        <div class="rb-content">${esc(r.content)}</div>
+      </div>`;
+    }).join('');
   } catch (e) {
-    console.error('Failed to load incident', e);
+    container.innerHTML = '<div class="card"><div class="empty-state" style="color:var(--red)">Search failed. Is the API running?</div></div>';
   }
 }
 
+// ===== HEALTH =====
+async function loadHealth() {
+  try {
+    const res = await fetch('/api/v1/health');
+    const data = await res.json();
+    const grid = document.getElementById('healthGrid');
+    grid.innerHTML = Object.entries(data).map(([key, val]) => {
+      let dotClass = 'ok';
+      if (val === 'disconnected' || val === false || val === 'error') dotClass = 'err';
+      if (val === 'degraded') dotClass = 'warn';
+      const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const display = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : val;
+      return `<div class="health-card">
+        <div class="h-label">${esc(label)}</div>
+        <div class="h-value"><span class="status-dot ${dotClass}"></span>${esc(String(display))}</div>
+      </div>`;
+    }).join('');
+
+    // Endpoint checks
+    const endpoints = [
+      { name: 'Health', path: '/api/v1/health', method: 'GET' },
+      { name: 'Incidents', path: '/api/v1/incidents?limit=1', method: 'GET' },
+      { name: 'Metrics', path: '/metrics', method: 'GET' },
+    ];
+    const checks = document.getElementById('endpointChecks');
+    checks.innerHTML = '';
+    for (const ep of endpoints) {
+      try {
+        const t0 = performance.now();
+        const r = await fetch(ep.path);
+        const ms = (performance.now() - t0).toFixed(0);
+        const ok = r.ok;
+        checks.innerHTML += `<div class="prom-row">
+          <span><span class="status-dot ${ok ? 'ok' : 'err'}"></span><strong>${ep.method}</strong> ${ep.path}</span>
+          <span class="prom-val" style="color:${ok ? 'var(--green)' : 'var(--red)'}">${r.status} · ${ms}ms</span>
+        </div>`;
+      } catch (e) {
+        checks.innerHTML += `<div class="prom-row">
+          <span><span class="status-dot err"></span><strong>${ep.method}</strong> ${ep.path}</span>
+          <span class="prom-val" style="color:var(--red)">ERROR</span>
+        </div>`;
+      }
+    }
+  } catch (e) {
+    document.getElementById('healthGrid').innerHTML = '<div class="empty-state" style="color:var(--red)">Failed to reach health endpoint.</div>';
+  }
+}
+
+// ===== METRICS =====
+async function loadMetrics() {
+  try {
+    const res = await fetch('/metrics');
+    const text = await res.text();
+    const card = document.getElementById('metricsCard');
+
+    // Parse into groups
+    const groups = {};
+    let currentHelp = '';
+    for (const line of text.split('\n')) {
+      if (line.startsWith('# HELP')) {
+        currentHelp = line.replace('# HELP ', '').split(' ').slice(1).join(' ');
+        continue;
+      }
+      if (line.startsWith('#') || !line.trim()) continue;
+      let name, labels = '', value;
+      if (line.includes('{')) {
+        const [np, rest] = line.split('{', 2);
+        name = np.trim();
+        const [lbl, val] = rest.split('}');
+        labels = lbl; value = val.trim();
+      } else {
+        const parts = line.split(/\s+/);
+        name = parts[0]; value = parts[1];
+      }
+      // Only show sentinel_ and process_ metrics
+      if (!name.startsWith('sentinel_') && !name.startsWith('process_')) continue;
+      if (!groups[name]) groups[name] = [];
+      groups[name].push({ labels, value });
+    }
+
+    if (!Object.keys(groups).length) {
+      card.innerHTML = '<div class="empty-state">No Sentinel metrics available yet. Run an analysis first.</div>';
+      return;
+    }
+
+    card.innerHTML = Object.entries(groups).map(([name, rows]) => `
+      <div class="prom-group">
+        <h4>${esc(name)}</h4>
+        ${rows.map(r => `
+          <div class="prom-row">
+            <span class="prom-labels">${r.labels ? '{'+esc(r.labels)+'}' : ''}</span>
+            <span class="prom-val">${esc(r.value)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('metricsCard').innerHTML = '<div class="empty-state" style="color:var(--red)">Failed to load metrics.</div>';
+  }
+}
+
+// ===== DASHBOARD REPORT (from analysis form) =====
 function renderReport(report, trace) {
   const card = document.getElementById('reportCard');
   card.classList.add('active');
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.scrollIntoView({ behavior: 'smooth' });
 
-  const alert = report.alert || {};
-  const sevClass = SEV_CLASS[alert.severity] || '';
+  const a = report.alert || {};
+  const sc = SEV_CLASS[a.severity] || '';
 
   document.getElementById('reportMetrics').innerHTML = `
-    <div class="metric-card"><div class="metric-label">Incident</div><div class="metric-value" style="font-size:1rem">${report.incident_id}</div></div>
-    <div class="metric-card"><div class="metric-label">Service</div><div class="metric-value" style="font-size:1rem">${alert.service || '—'}</div></div>
-    <div class="metric-card"><div class="metric-label">Severity</div><div class="metric-value ${sevClass}">${(alert.severity || '—').toUpperCase()}</div></div>
-    <div class="metric-card"><div class="metric-label">Duration</div><div class="metric-value">${(report.duration_seconds || 0).toFixed(1)}s</div></div>
-    <div class="metric-card"><div class="metric-label">Tokens</div><div class="metric-value">${(report.total_tokens || 0).toLocaleString()}</div></div>
-    <div class="metric-card"><div class="metric-label">Cost</div><div class="metric-value">$${(report.total_cost_usd || 0).toFixed(4)}</div></div>
+    <div class="metric-card"><div class="metric-label">Incident</div><div class="metric-value" style="font-size:1rem">${esc(report.incident_id)}</div></div>
+    <div class="metric-card"><div class="metric-label">Service</div><div class="metric-value" style="font-size:1rem">${esc(a.service||'—')}</div></div>
+    <div class="metric-card"><div class="metric-label">Severity</div><div class="metric-value ${sc}">${esc((a.severity||'—')).toUpperCase()}</div></div>
+    <div class="metric-card"><div class="metric-label">Duration</div><div class="metric-value">${(report.duration_seconds||0).toFixed(1)}s</div></div>
+    <div class="metric-card"><div class="metric-label">Tokens</div><div class="metric-value">${(report.total_tokens||0).toLocaleString()}</div></div>
+    <div class="metric-card"><div class="metric-label">Cost</div><div class="metric-value">$${(report.total_cost_usd||0).toFixed(4)}</div></div>
   `;
-
   document.getElementById('rootCause').textContent = report.root_cause || 'Unknown';
 
   const conf = report.confidence_score || 0;
-  const confColor = conf >= 0.7 ? 'var(--green)' : conf >= 0.4 ? 'var(--orange)' : 'var(--red)';
   const fill = document.getElementById('confidenceFill');
-  fill.style.width = `${conf * 100}%`;
-  fill.style.background = confColor;
+  fill.style.width = (conf*100) + '%';
+  fill.style.background = conf >= 0.7 ? 'var(--green)' : conf >= 0.4 ? 'var(--orange)' : 'var(--red)';
 
-  const steps = report.remediation_steps || [];
-  document.getElementById('remediationSteps').innerHTML = steps.map((s, i) =>
-    `<li><span class="step-num">${i + 1}</span><span>${s}</span></li>`
+  document.getElementById('remediationSteps').innerHTML = (report.remediation_steps||[]).map((s,i) =>
+    `<li><span class="step-num">${i+1}</span><span>${esc(s)}</span></li>`
   ).join('');
 
   document.getElementById('approvalBanner').style.display = report.requires_human_approval ? 'flex' : 'none';
 
-  // Trace
-  if (trace && trace.length) {
-    document.getElementById('traceSteps').innerHTML = trace.map(step => {
-      const icon = ICONS[step.agent_name] || '🤖';
-      const tools = (step.tool_calls || []).map(tc =>
-        `<span class="tool-chip">${tc.tool_name} (${tc.latency_ms.toFixed(0)}ms)</span>`
-      ).join('');
-      return `
-        <div class="trace-step">
-          <div class="trace-header">
-            <div class="agent-label">${icon} ${step.agent_name} — ${step.action}</div>
-            <div class="trace-tokens">${(step.tokens_used || 0).toLocaleString()} tokens · $${(step.cost_usd || 0).toFixed(4)}</div>
-          </div>
-          ${tools ? `<div class="trace-tools">${tools}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-  }
+  document.getElementById('traceSteps').innerHTML = (trace||[]).map(step => {
+    const icon = ICONS[step.agent_name] || '🤖';
+    const tools = (step.tool_calls||[]).map(tc =>
+      `<span class="tool-chip">${esc(tc.tool_name)} (${tc.latency_ms.toFixed(0)}ms)</span>`
+    ).join('');
+    return `<div class="trace-step">
+      <div class="trace-header">
+        <div class="agent-label">${icon} ${esc(step.agent_name)} — ${esc(step.action)}</div>
+        <div class="trace-tokens">${(step.tokens_used||0).toLocaleString()} tokens · $${(step.cost_usd||0).toFixed(4)}</div>
+      </div>
+      ${tools ? `<div class="trace-tools">${tools}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
-// Streaming analysis
+// ===== STREAMING =====
 document.getElementById('analysisForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('analyzeBtn');
   const streamBox = document.getElementById('streamBox');
   const streamEvents = document.getElementById('streamEvents');
 
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
+  btn.disabled = true; btn.textContent = 'Analyzing...';
   streamBox.classList.add('active');
   streamEvents.innerHTML = '<div class="stream-event"><span class="spinner"></span><span class="ev-text">Starting analysis pipeline...</span></div>';
   document.getElementById('reportCard').classList.remove('active');
@@ -660,14 +815,12 @@ document.getElementById('analysisForm').addEventListener('submit', async (e) => 
   };
 
   let report = null;
-
   try {
     const res = await fetch('/api/v1/analyze/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -676,7 +829,6 @@ document.getElementById('analysisForm').addEventListener('submit', async (e) => 
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-
       const lines = buffer.split('\n');
       buffer = lines.pop();
 
@@ -686,47 +838,42 @@ document.getElementById('analysisForm').addEventListener('submit', async (e) => 
           const data = JSON.parse(line.slice(6));
           const icon = ICONS[data.agent_name] || '';
           const type = data.event_type;
-
-          if (type === 'agent_start') {
-            streamEvents.innerHTML += `<div class="stream-event"><span class="ev-icon">${icon}</span><span class="ev-text"><strong>${data.agent_name}</strong> agent started</span></div>`;
-          } else if (type === 'tool_call') {
-            const action = (data.data || {}).action || '';
-            streamEvents.innerHTML += `<div class="stream-event"><span class="ev-icon">🔧</span><span class="ev-text">${data.agent_name} → <code>${action}</code></span></div>`;
-          } else if (type === 'agent_complete') {
-            const tokens = (data.data || {}).tokens_used || 0;
-            streamEvents.innerHTML += `<div class="stream-event complete"><span class="ev-icon">✓</span><span class="ev-text"><strong>${data.agent_name}</strong> complete (${tokens.toLocaleString()} tokens)</span></div>`;
-          } else if (type === 'analysis_complete') {
-            report = (data.data || {}).report;
+          if (type === 'agent_start')
+            streamEvents.innerHTML += `<div class="stream-event"><span class="ev-icon">${icon}</span><span class="ev-text"><strong>${esc(data.agent_name)}</strong> agent started</span></div>`;
+          else if (type === 'tool_call')
+            streamEvents.innerHTML += `<div class="stream-event"><span class="ev-icon">🔧</span><span class="ev-text">${esc(data.agent_name)} → <code>${esc((data.data||{}).action||'')}</code></span></div>`;
+          else if (type === 'agent_complete')
+            streamEvents.innerHTML += `<div class="stream-event complete"><span class="ev-icon">✓</span><span class="ev-text"><strong>${esc(data.agent_name)}</strong> complete (${((data.data||{}).tokens_used||0).toLocaleString()} tokens)</span></div>`;
+          else if (type === 'analysis_complete') {
+            report = (data.data||{}).report;
             streamEvents.innerHTML += `<div class="stream-event complete"><span class="ev-icon">🎉</span><span class="ev-text"><strong>Analysis complete</strong></span></div>`;
-          } else if (type === 'error') {
-            const msg = (data.data || {}).message || 'Unknown error';
-            streamEvents.innerHTML += `<div class="stream-event error"><span class="ev-icon">✗</span><span class="ev-text">${msg}</span></div>`;
-          }
+          } else if (type === 'error')
+            streamEvents.innerHTML += `<div class="stream-event error"><span class="ev-icon">✗</span><span class="ev-text">${esc((data.data||{}).message||'Unknown error')}</span></div>`;
           streamBox.scrollTop = streamBox.scrollHeight;
-        } catch (err) { /* skip malformed */ }
+        } catch (err) {}
       }
     }
   } catch (err) {
-    streamEvents.innerHTML += `<div class="stream-event error"><span class="ev-icon">✗</span><span class="ev-text">Connection error: ${err.message}</span></div>`;
+    streamEvents.innerHTML += `<div class="stream-event error"><span class="ev-icon">✗</span><span class="ev-text">Connection error: ${esc(err.message)}</span></div>`;
   }
 
-  btn.disabled = false;
-  btn.textContent = 'Analyze Incident';
+  btn.disabled = false; btn.textContent = 'Analyze Incident';
 
   if (report) {
-    // Fetch trace for the new report
     try {
-      const traceRes = await fetch(`/api/v1/incidents/${report.incident_id}/trace`);
-      const trace = await traceRes.json();
+      const tRes = await fetch('/api/v1/incidents/' + report.incident_id + '/trace');
+      const trace = await tRes.json();
       renderReport(report, trace);
-    } catch (e) {
-      renderReport(report, report.agent_trace || []);
-    }
-    loadIncidents();
+    } catch (e) { renderReport(report, report.agent_trace || []); }
   }
 });
 
-loadIncidents();
+// ===== UTILITY =====
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 </script>
 
 </body>

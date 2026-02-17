@@ -10,7 +10,7 @@ from typing import Any
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.responses import Response
 
 from agent.core import IncidentAnalyzer
@@ -84,9 +84,37 @@ app.add_middleware(
 )
 
 
-# Request logging middleware
+# Map API paths to dashboard pages for browser redirects
+_API_TO_PAGE = {
+    "/api/v1/health": "health",
+    "/api/v1/incidents": "incidents",
+    "/api/v1/runbooks/search": "runbooks",
+    "/metrics": "metrics",
+}
+
+
+# Request logging + browser redirect middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next: Any) -> Response:
+    # Redirect browsers hitting API paths to the dashboard UI
+    accept = request.headers.get("accept", "")
+    path = request.url.path
+    if (
+        request.method == "GET"
+        and "text/html" in accept
+        and path in _API_TO_PAGE
+    ):
+        return RedirectResponse(url=f"/#{_API_TO_PAGE[path]}")
+
+    # Also redirect /api/v1/incidents/{id} to incidents page
+    if (
+        request.method == "GET"
+        and "text/html" in accept
+        and path.startswith("/api/v1/incidents/")
+        and "/trace" not in path
+    ):
+        return RedirectResponse(url="/#incidents")
+
     start = time.perf_counter()
     response: Response = await call_next(request)
     duration_ms = (time.perf_counter() - start) * 1000
