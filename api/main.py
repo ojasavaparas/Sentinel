@@ -15,7 +15,13 @@ from starlette.responses import Response
 
 from agent.core import IncidentAnalyzer
 from agent.llm_client import create_client
-from api.deps import get_incident_store, init_analyzer, init_rag_engine
+from api.deps import (
+    IncidentStore,
+    get_incident_store,
+    init_analyzer,
+    init_incident_store,
+    init_rag_engine,
+)
 from api.routes import metrics_router, router
 from api.seed_data import get_seed_incidents
 from rag.engine import RAGEngine
@@ -62,6 +68,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     analyzer = IncidentAnalyzer(llm_client=llm_client, rag_engine=rag_engine)
     init_analyzer(analyzer)
     logger.info("analyzer_initialized")
+
+    # Initialize incident store — DynamoDB in production, in-memory locally
+    table_name = os.environ.get("DYNAMODB_TABLE_NAME")
+    init_incident_store(IncidentStore(table_name=table_name))
+    logger.info("incident_store_initialized", dynamo=table_name is not None)
 
     # Seed example incidents so the dashboard isn't empty
     store = get_incident_store()

@@ -12,6 +12,9 @@ from aws_cdk import (
     aws_certificatemanager as acm,
 )
 from aws_cdk import (
+    aws_dynamodb as dynamodb,
+)
+from aws_cdk import (
     aws_ec2 as ec2,
 )
 from aws_cdk import (
@@ -101,6 +104,22 @@ class SentinelStack(Stack):
         )
 
         # ----------------------------------------------------------------------
+        # DynamoDB — incident persistence
+        # ----------------------------------------------------------------------
+        incidents_table = dynamodb.Table(
+            self,
+            "IncidentsTable",
+            table_name="sentinel-incidents",
+            partition_key=dynamodb.Attribute(
+                name="incident_id",
+                type=dynamodb.AttributeType.STRING,
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            point_in_time_recovery=True,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+
+        # ----------------------------------------------------------------------
         # Route 53 Hosted Zone + ACM Certificate
         # ----------------------------------------------------------------------
         hosted_zone = route53.HostedZone.from_lookup(
@@ -137,6 +156,7 @@ class SentinelStack(Stack):
                 "LLM_PROVIDER": "anthropic",
                 "LLM_MODEL": "claude-sonnet-4-20250514",
                 "LOG_FORMAT": "json",
+                "DYNAMODB_TABLE_NAME": incidents_table.table_name,
             },
             secrets={
                 "ANTHROPIC_API_KEY": ecs.Secret.from_secrets_manager(
@@ -160,6 +180,9 @@ class SentinelStack(Stack):
         container.add_port_mappings(
             ecs.PortMapping(container_port=8000, protocol=ecs.Protocol.TCP)
         )
+
+        # Grant the ECS task read/write access to the incidents table
+        incidents_table.grant_read_write_data(task_definition.task_role)
 
         # ----------------------------------------------------------------------
         # Security Groups

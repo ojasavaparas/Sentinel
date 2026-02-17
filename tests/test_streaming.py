@@ -22,7 +22,11 @@ def stream_client(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LLM_PROVIDER", "mock")
 
     from api import deps
+    from api.deps import IncidentStore
     from api.main import app
+
+    test_store = IncidentStore(table_name=None)
+    deps._incident_store = test_store
 
     with TestClient(app) as c:
         yield c
