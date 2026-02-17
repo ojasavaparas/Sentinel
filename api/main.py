@@ -15,8 +15,9 @@ from starlette.responses import Response
 
 from agent.core import IncidentAnalyzer
 from agent.llm_client import create_client
-from api.deps import init_analyzer, init_rag_engine
+from api.deps import get_incident_store, init_analyzer, init_rag_engine
 from api.routes import metrics_router, router
+from api.seed_data import get_seed_incidents
 from rag.engine import RAGEngine
 from rag.ingest import COLLECTION_NAME, ingest_runbooks
 
@@ -61,6 +62,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     analyzer = IncidentAnalyzer(llm_client=llm_client, rag_engine=rag_engine)
     init_analyzer(analyzer)
     logger.info("analyzer_initialized")
+
+    # Seed example incidents so the dashboard isn't empty
+    store = get_incident_store()
+    if not store:
+        for incident in get_seed_incidents():
+            store[incident.incident_id] = incident
+        logger.info("seed_incidents_loaded", count=len(store))
 
     yield
 
