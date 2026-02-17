@@ -21,8 +21,6 @@ router = APIRouter(prefix="/api/v1")
 metrics_router = APIRouter()
 
 
-# --- Incident Analysis ---
-
 
 @router.post("/analyze", response_model=IncidentReport)
 async def analyze_incident(alert: Alert) -> IncidentReport:
@@ -58,7 +56,6 @@ async def analyze_incident_stream(alert: Alert) -> StreamingResponse:
                 payload = json.dumps(event.model_dump(mode="json"), default=str)
                 yield f"event: {event.event_type}\ndata: {payload}\n\n"
 
-                # Store the final report
                 if event.event_type == "analysis_complete":
                     report_data = event.data.get("report")
                     if report_data:
@@ -90,7 +87,6 @@ async def list_incidents(
     if severity:
         incidents = [i for i in incidents if i.alert.severity == severity]
 
-    # Sort by most recent first (based on alert timestamp)
     incidents.sort(key=lambda x: x.alert.timestamp, reverse=True)
     incidents = incidents[:limit]
 
@@ -148,8 +144,6 @@ async def get_incident_trace(incident_id: str) -> list[dict[str, Any]]:
     ]
 
 
-# --- Runbook Search ---
-
 
 @router.post("/runbooks/search")
 async def search_runbooks(body: dict[str, Any]) -> dict[str, Any]:
@@ -186,8 +180,6 @@ async def search_runbooks(body: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-# --- Health ---
-
 
 @router.get("/health")
 async def health_check() -> dict[str, Any]:
@@ -202,8 +194,6 @@ async def health_check() -> dict[str, Any]:
         "runbooks_indexed": chroma_ok,
     }
 
-
-# --- Prometheus Metrics ---
 
 
 @metrics_router.get("/metrics")

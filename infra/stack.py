@@ -53,9 +53,6 @@ class SentinelStack(Stack):
         domain_name = self.node.try_get_context("domain_name") or "agent.ojasavaparas.com"
         hosted_zone_name = self.node.try_get_context("hosted_zone_name") or "ojasavaparas.com"
 
-        # ----------------------------------------------------------------------
-        # VPC — 2 AZs, public + private subnets, 1 NAT gateway
-        # ----------------------------------------------------------------------
         vpc = ec2.Vpc(
             self,
             "SentinelVpc",
@@ -75,9 +72,6 @@ class SentinelStack(Stack):
             ],
         )
 
-        # ----------------------------------------------------------------------
-        # ECS Cluster
-        # ----------------------------------------------------------------------
         cluster = ecs.Cluster(
             self,
             "SentinelCluster",
@@ -85,16 +79,10 @@ class SentinelStack(Stack):
             cluster_name="sentinel-cluster",
         )
 
-        # ----------------------------------------------------------------------
-        # ECR Repository (import existing — created outside CDK)
-        # ----------------------------------------------------------------------
         repository = ecr.Repository.from_repository_name(
             self, "SentinelRepo", "sentinel"
         )
 
-        # ----------------------------------------------------------------------
-        # CloudWatch Log Group
-        # ----------------------------------------------------------------------
         log_group = logs.LogGroup(
             self,
             "SentinelLogs",
@@ -103,9 +91,6 @@ class SentinelStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
-        # ----------------------------------------------------------------------
-        # DynamoDB — incident persistence
-        # ----------------------------------------------------------------------
         incidents_table = dynamodb.Table(
             self,
             "IncidentsTable",
@@ -119,9 +104,6 @@ class SentinelStack(Stack):
             removal_policy=RemovalPolicy.RETAIN,
         )
 
-        # ----------------------------------------------------------------------
-        # Route 53 Hosted Zone + ACM Certificate
-        # ----------------------------------------------------------------------
         hosted_zone = route53.HostedZone.from_lookup(
             self,
             "HostedZone",
@@ -135,9 +117,6 @@ class SentinelStack(Stack):
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
 
-        # ----------------------------------------------------------------------
-        # Fargate Task Definition
-        # ----------------------------------------------------------------------
         task_definition = ecs.FargateTaskDefinition(
             self,
             "SentinelTask",
@@ -181,12 +160,8 @@ class SentinelStack(Stack):
             ecs.PortMapping(container_port=8000, protocol=ecs.Protocol.TCP)
         )
 
-        # Grant the ECS task read/write access to the incidents table
         incidents_table.grant_read_write_data(task_definition.task_role)
 
-        # ----------------------------------------------------------------------
-        # Security Groups
-        # ----------------------------------------------------------------------
         alb_sg = ec2.SecurityGroup(
             self,
             "AlbSg",
@@ -206,9 +181,6 @@ class SentinelStack(Stack):
         )
         fargate_sg.add_ingress_rule(alb_sg, ec2.Port.tcp(8000), "From ALB")
 
-        # ----------------------------------------------------------------------
-        # Application Load Balancer
-        # ----------------------------------------------------------------------
         alb = elbv2.ApplicationLoadBalancer(
             self,
             "SentinelAlb",
@@ -218,7 +190,6 @@ class SentinelStack(Stack):
             idle_timeout=Duration.seconds(120),
         )
 
-        # HTTPS listener
         https_listener = alb.add_listener(
             "HttpsListener",
             port=443,
@@ -228,7 +199,6 @@ class SentinelStack(Stack):
             ),
         )
 
-        # HTTP → HTTPS redirect
         alb.add_listener(
             "HttpRedirect",
             port=80,
@@ -239,9 +209,6 @@ class SentinelStack(Stack):
             ),
         )
 
-        # ----------------------------------------------------------------------
-        # Fargate Service
-        # ----------------------------------------------------------------------
         fargate_service = ecs.FargateService(
             self,
             "SentinelService",
@@ -253,7 +220,6 @@ class SentinelStack(Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
         )
 
-        # Register with ALB target group
         https_listener.add_targets(
             "SentinelTargets",
             port=8000,
@@ -270,9 +236,6 @@ class SentinelStack(Stack):
             conditions=[elbv2.ListenerCondition.path_patterns(["/*"])],
         )
 
-        # ----------------------------------------------------------------------
-        # Auto-Scaling — min 0, max 2, scale on CPU > 70%
-        # ----------------------------------------------------------------------
         scaling = fargate_service.auto_scale_task_count(
             min_capacity=0,
             max_capacity=2,
@@ -285,9 +248,6 @@ class SentinelStack(Stack):
             scale_out_cooldown=Duration.seconds(60),
         )
 
-        # ----------------------------------------------------------------------
-        # Route 53 A Record
-        # ----------------------------------------------------------------------
         route53.ARecord(
             self,
             "SentinelDns",
@@ -296,9 +256,6 @@ class SentinelStack(Stack):
             target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
         )
 
-        # ----------------------------------------------------------------------
-        # GitHub Actions OIDC — allows CD pipeline to push to ECR & update ECS
-        # ----------------------------------------------------------------------
         github_repo = self.node.try_get_context("github_repo") or "ojasavaparas/Sentinel"
 
         github_oidc_provider = iam.OpenIdConnectProvider(
@@ -326,10 +283,8 @@ class SentinelStack(Stack):
             ),
         )
 
-        # ECR push permissions
         repository.grant_pull_push(github_actions_role)
 
-        # ECS update permissions
         github_actions_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
@@ -343,9 +298,6 @@ class SentinelStack(Stack):
             )
         )
 
-        # ----------------------------------------------------------------------
-        # Outputs
-        # ----------------------------------------------------------------------
         cdk.CfnOutput(self, "AlbDnsName", value=alb.load_balancer_dns_name)
         cdk.CfnOutput(self, "EcrRepoUri", value=repository.repository_uri)
         cdk.CfnOutput(self, "ServiceUrl", value=f"https://{domain_name}")

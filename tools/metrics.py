@@ -35,14 +35,11 @@ async def get_metrics(
     """
     metrics = _load_metrics()
 
-    # Filter by service
     results = [m for m in metrics if m["service"] == service]
 
-    # Filter by metric name
     if metric_name:
         results = [m for m in results if m["metric_name"] == metric_name]
 
-    # Filter by time range
     if time_start:
         start_dt = datetime.fromisoformat(time_start.replace("Z", "+00:00"))
         results = [
@@ -57,7 +54,6 @@ async def get_metrics(
             if datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00")) <= end_dt
         ]
 
-    # Sort by timestamp
     results.sort(key=lambda x: x["timestamp"])
 
     return results

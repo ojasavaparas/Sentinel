@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from agent.core import IncidentAnalyzer
 from agent.models import IncidentReport
 from rag.engine import RAGEngine
-
-logger = logging.getLogger(__name__)
 
 
 class IncidentStore:
@@ -22,12 +19,9 @@ class IncidentStore:
     def __init__(self, table_name: str | None = None) -> None:
         self._table_name = table_name
         self._memory: dict[str, IncidentReport] = {}
-        self._table = None  # lazy — set on first DynamoDB call
-
-    # -- internal helpers --------------------------------------------------
+        self._table = None
 
     def _dynamo_table(self) -> Any:
-        """Return the boto3 DynamoDB Table resource, creating it lazily."""
         if self._table is None:
             import boto3
 
@@ -37,8 +31,6 @@ class IncidentStore:
     @property
     def _use_dynamo(self) -> bool:
         return self._table_name is not None
-
-    # -- dict-like interface -----------------------------------------------
 
     def __setitem__(self, key: str, value: IncidentReport) -> None:
         if self._use_dynamo:
@@ -82,19 +74,14 @@ class IncidentStore:
 
     def __bool__(self) -> bool:
         if self._use_dynamo:
-            # Scan with limit=1 to check for any items
             resp = self._dynamo_table().scan(Limit=1, Select="COUNT")
             return bool(resp["Count"] > 0)
         return bool(self._memory)
 
     def clear(self) -> None:
-        """Remove all items. Only used in tests (in-memory mode)."""
         self._memory.clear()
 
-    # -- DynamoDB helpers --------------------------------------------------
-
     def _scan_all(self) -> list[IncidentReport]:
-        """Paginated scan returning all incidents from DynamoDB."""
         items: list[IncidentReport] = []
         table = self._dynamo_table()
         resp = table.scan()
@@ -106,10 +93,6 @@ class IncidentStore:
                 items.append(IncidentReport.model_validate_json(item["data"]))
         return items
 
-
-# ---------------------------------------------------------------------------
-# Global singletons
-# ---------------------------------------------------------------------------
 
 _analyzer: IncidentAnalyzer | None = None
 _rag_engine: RAGEngine | None = None

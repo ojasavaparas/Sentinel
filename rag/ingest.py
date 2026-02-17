@@ -54,7 +54,6 @@ def ingest_runbooks(
 
     print(f"Found {len(md_files)} runbook files")
 
-    # Prepare chunks
     all_chunks: list[str] = []
     all_metadatas: list[dict[str, str | int]] = []
     all_ids: list[str] = []
@@ -75,15 +74,11 @@ def ingest_runbooks(
 
     print(f"Created {len(all_chunks)} chunks from {len(md_files)} documents")
 
-    # Generate embeddings
     print("Generating embeddings...")
     model = get_embedding_model()
     embeddings = model.embed(all_chunks)
 
-    # Store in ChromaDB
     client = chromadb.PersistentClient(path=chroma_persist_dir)
-
-    # Delete existing collection if it exists, then recreate
     try:
         client.delete_collection(COLLECTION_NAME)
     except Exception:

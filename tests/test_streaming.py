@@ -11,10 +11,6 @@ from fastapi.testclient import TestClient
 from agent.models import StreamEvent
 from monitoring.tracer import DecisionTracer
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 
 @pytest.fixture
 def stream_client(monkeypatch: pytest.MonkeyPatch):
@@ -33,10 +29,6 @@ def stream_client(monkeypatch: pytest.MonkeyPatch):
 
     deps._incident_store.clear()
 
-
-# ---------------------------------------------------------------------------
-# SSE Endpoint Tests
-# ---------------------------------------------------------------------------
 
 
 def test_stream_returns_event_stream_content_type(stream_client: TestClient):
@@ -115,11 +107,9 @@ def test_stream_event_ordering(stream_client: TestClient):
             data = json.loads(line[6:])
             event_types.append(data["event_type"])
 
-    # Each agent_start for a given agent should appear before its agent_complete
     for agent in ("triage", "research", "remediation"):
         starts = [i for i, e in enumerate(event_types) if e == "agent_start"]
         completes = [i for i, e in enumerate(event_types) if e == "agent_complete"]
-        # There should be at least as many starts as completes
         assert len(starts) >= len(completes)
 
 
@@ -131,11 +121,9 @@ def test_stream_stores_report_in_incident_store(stream_client: TestClient):
         "severity": "critical",
         "timestamp": "2024-01-15T14:30:00Z",
     }
-    # Consume the stream fully
     with stream_client.stream("POST", "/api/v1/analyze/stream", json=payload) as resp:
         raw = b"".join(resp.iter_bytes()).decode()
 
-    # Extract incident_id from the analysis_complete event
     incident_id = None
     for line in raw.split("\n"):
         if line.startswith("data: "):
@@ -146,7 +134,6 @@ def test_stream_stores_report_in_incident_store(stream_client: TestClient):
 
     assert incident_id is not None
 
-    # Verify it's in the store
     resp = stream_client.get(f"/api/v1/incidents/{incident_id}")
     assert resp.status_code == 200
     assert resp.json()["incident_id"] == incident_id
@@ -163,7 +150,6 @@ def test_stream_sse_format(stream_client: TestClient):
     with stream_client.stream("POST", "/api/v1/analyze/stream", json=payload) as resp:
         raw = b"".join(resp.iter_bytes()).decode()
 
-    # Split by double newline to get individual SSE messages
     messages = [m.strip() for m in raw.split("\n\n") if m.strip()]
     assert len(messages) > 0
 
@@ -171,13 +157,8 @@ def test_stream_sse_format(stream_client: TestClient):
         lines = msg.split("\n")
         assert lines[0].startswith("event: "), f"Expected 'event: ...' line, got: {lines[0]}"
         assert lines[1].startswith("data: "), f"Expected 'data: ...' line, got: {lines[1]}"
-        # Verify data is valid JSON
         json.loads(lines[1][6:])
 
-
-# ---------------------------------------------------------------------------
-# Tracer Queue Tests
-# ---------------------------------------------------------------------------
 
 
 def test_tracer_queue_receives_tool_call_events():

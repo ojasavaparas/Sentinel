@@ -37,14 +37,11 @@ async def search_logs(
     """
     logs = _load_logs()
 
-    # Filter by service
     results = [log for log in logs if log["service"] == service]
 
-    # Filter by severity
     if severity:
         results = [log for log in results if log["level"] == severity.upper()]
 
-    # Filter by time range
     if time_start:
         start_dt = datetime.fromisoformat(time_start.replace("Z", "+00:00"))
         results = [
@@ -59,12 +56,10 @@ async def search_logs(
             if datetime.fromisoformat(log["timestamp"].replace("Z", "+00:00")) <= end_dt
         ]
 
-    # Filter by query substring
     if query:
         query_lower = query.lower()
         results = [log for log in results if query_lower in log["message"].lower()]
 
-    # Sort by timestamp
     results.sort(key=lambda x: x["timestamp"])
 
     return results

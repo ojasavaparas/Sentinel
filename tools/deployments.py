@@ -33,7 +33,6 @@ async def get_recent_deployments(
     if service:
         deployments = [d for d in deployments if d["service"] == service]
 
-    # Sort by timestamp descending (most recent first)
     deployments.sort(key=lambda x: x["timestamp"], reverse=True)
 
     return deployments[:limit]

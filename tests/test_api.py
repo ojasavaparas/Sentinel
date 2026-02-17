@@ -10,10 +10,6 @@ from fastapi.testclient import TestClient
 
 from agent.models import IncidentReport, ToolCall
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 
 @pytest.fixture
 def client(sample_report: IncidentReport, monkeypatch: pytest.MonkeyPatch):
@@ -34,10 +30,6 @@ def client(sample_report: IncidentReport, monkeypatch: pytest.MonkeyPatch):
     deps._incident_store.clear()
 
 
-# ---------------------------------------------------------------------------
-# Health Check
-# ---------------------------------------------------------------------------
-
 
 def test_health_check(client: TestClient):
     response = client.get("/api/v1/health")
@@ -47,10 +39,6 @@ def test_health_check(client: TestClient):
     assert "chroma_db" in data
     assert "llm_provider" in data
 
-
-# ---------------------------------------------------------------------------
-# POST /api/v1/analyze
-# ---------------------------------------------------------------------------
 
 
 def test_post_analyze_returns_incident_report(client: TestClient):
@@ -92,10 +80,6 @@ def test_post_analyze_missing_required_field(client: TestClient):
     assert response.status_code == 422
 
 
-# ---------------------------------------------------------------------------
-# List Incidents
-# ---------------------------------------------------------------------------
-
 
 def test_list_incidents(client: TestClient):
     response = client.get("/api/v1/incidents")
@@ -113,7 +97,6 @@ def test_list_incidents_filter_by_severity(client: TestClient):
 
     response = client.get("/api/v1/incidents?severity=low")
     assert response.status_code == 200
-    # Seed data has no low-severity incidents
     assert all(i["severity"] == "low" for i in response.json())
 
 
@@ -122,10 +105,6 @@ def test_list_incidents_respects_limit(client: TestClient):
     assert response.status_code == 200
     assert len(response.json()) <= 1
 
-
-# ---------------------------------------------------------------------------
-# Get Incident
-# ---------------------------------------------------------------------------
 
 
 def test_get_incident(client: TestClient):
@@ -141,10 +120,6 @@ def test_get_incident_not_found(client: TestClient):
     response = client.get("/api/v1/incidents/INC-NONEXIST")
     assert response.status_code == 404
 
-
-# ---------------------------------------------------------------------------
-# Incident Trace
-# ---------------------------------------------------------------------------
 
 
 def test_get_incident_trace(client: TestClient):
@@ -164,10 +139,6 @@ def test_get_trace_not_found(client: TestClient):
     response = client.get("/api/v1/incidents/INC-NONEXIST/trace")
     assert response.status_code == 404
 
-
-# ---------------------------------------------------------------------------
-# Runbook Search
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
@@ -200,10 +171,6 @@ def test_runbook_search_empty_query(client: TestClient):
     assert response.status_code == 400
 
 
-# ---------------------------------------------------------------------------
-# Prometheus Metrics
-# ---------------------------------------------------------------------------
-
 
 def test_prometheus_metrics_endpoint(client: TestClient):
     response = client.get("/metrics")
@@ -218,20 +185,12 @@ def test_prometheus_metrics_contain_sentinel_metrics(client: TestClient):
     assert "sentinel_incident_analyses_total" in text or "sentinel_active_analyses" in text
 
 
-# ---------------------------------------------------------------------------
-# MCP Server
-# ---------------------------------------------------------------------------
-
 
 def test_mcp_server_tools_defined():
     from protocols.mcp_server import mcp
 
     assert mcp.name == "Sentinel"
 
-
-# ---------------------------------------------------------------------------
-# Metric Recording Functions
-# ---------------------------------------------------------------------------
 
 
 def test_record_tool_call():
@@ -302,10 +261,6 @@ def test_record_analysis_complete(sample_report: IncidentReport):
     after_approval = sentinel_human_approval_required_total._value.get()
     assert after_approval == before_approval + 1
 
-
-# ---------------------------------------------------------------------------
-# Decision Tracer Enhancements
-# ---------------------------------------------------------------------------
 
 
 def test_tracer_duration_ms():
@@ -383,10 +338,6 @@ def test_tracer_export_for_dashboard():
     assert dashboard["agents"]["research"]["tool_call_count"] == 2
     assert dashboard["agents"]["research"]["total_tokens"] == 2000
 
-
-# ---------------------------------------------------------------------------
-# Structured Logging
-# ---------------------------------------------------------------------------
 
 
 def test_configure_logging():

@@ -33,14 +33,12 @@ logger = structlog.get_logger()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     """Startup and shutdown events."""
-    # Configure structured logging before anything else
     from monitoring.logging import configure_logging
 
     configure_logging()
 
     logger.info("sentinel_starting")
 
-    # Initialize RAG engine — ingest runbooks if collection is empty
     try:
         import os
 
@@ -63,18 +61,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
         logger.error("rag_init_failed", error=str(e))
         rag_engine = None
 
-    # Initialize the incident analyzer
     llm_client = create_client()
     analyzer = IncidentAnalyzer(llm_client=llm_client, rag_engine=rag_engine)
     init_analyzer(analyzer)
     logger.info("analyzer_initialized")
 
-    # Initialize incident store — DynamoDB in production, in-memory locally
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
     init_incident_store(IncidentStore(table_name=table_name))
     logger.info("incident_store_initialized", dynamo=table_name is not None)
 
-    # Seed example incidents so the dashboard isn't empty
     store = get_incident_store()
     if not store:
         for incident in get_seed_incidents():
@@ -93,7 +88,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -103,7 +97,6 @@ app.add_middleware(
 )
 
 
-# Map API paths to dashboard pages for browser redirects
 _API_TO_PAGE = {
     "/api/v1/health": "health",
     "/api/v1/incidents": "incidents",
@@ -112,10 +105,8 @@ _API_TO_PAGE = {
 }
 
 
-# Request logging + browser redirect middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next: Any) -> Response:
-    # Redirect browsers hitting API paths to the dashboard UI
     accept = request.headers.get("accept", "")
     path = request.url.path
     if (
@@ -125,7 +116,6 @@ async def log_requests(request: Request, call_next: Any) -> Response:
     ):
         return RedirectResponse(url=f"/#{_API_TO_PAGE[path]}")
 
-    # Also redirect /api/v1/incidents/{id} to incidents page
     if (
         request.method == "GET"
         and "text/html" in accept
@@ -148,7 +138,6 @@ async def log_requests(request: Request, call_next: Any) -> Response:
     return response
 
 
-# Error handling
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.error("unhandled_exception", path=request.url.path, error=str(exc))
@@ -162,7 +151,6 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-# Root route — serve the web dashboard
 @app.get("/", response_class=HTMLResponse)
 async def root() -> HTMLResponse:
     """Serve the Sentinel web dashboard."""
@@ -172,6 +160,5 @@ async def root() -> HTMLResponse:
     return HTMLResponse(content=template.read_text())
 
 
-# Include routers
 app.include_router(router)
 app.include_router(metrics_router)
